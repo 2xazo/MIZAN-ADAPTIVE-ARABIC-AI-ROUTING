@@ -1,8 +1,8 @@
 """The product page's content, with no Streamlit in it.
 
 Every number is read from the results files through `mizan.story`, never typed into a template.
-`build_top` and `build_bottom` return complete HTML documents for the two page iframes.
-`app/web/*.html` holds structure and copy only, and a test keeps percentages out of those files.
+`build_page` returns the complete HTML document for the page iframe.
+`app/web/page.html` holds structure and copy only, and a test keeps percentages out of those files.
 """
 from __future__ import annotations
 
@@ -446,14 +446,10 @@ def _document(body_file: str, tokens: dict, data: dict, libraries: str = "") -> 
             f'{libraries}<script>window.MIZAN={script_json(data)};</script><script>{js}</script></body></html>')
 
 
-def build_top(res: dict, examples: dict | None) -> str:
-    return _document("top.html", tokens_for(res, examples), {"scale": scale_cards(res)})
-
-
-def build_bottom(res: dict, per_item: dict, examples: dict | None) -> str:
-    data = {"replay": replay_data(res, per_item), "chart": chart_data(res), "robust": robustness_data(res, examples),
+def build_page(res: dict, per_item: dict, examples: dict | None) -> str:
+    data = {"scale": scale_cards(res), "replay": replay_data(res, per_item), "chart": chart_data(res), "robust": robustness_data(res, examples),
             "impact": {"handled": res["original"]["mechanism"]["coverage"]}}
-    return _document("bottom.html", tokens_for(res, examples), data, f"<script>{PLOTLY.read_text(encoding='utf-8')}</script>")
+    return _document("page.html", tokens_for(res, examples), data, f"<script>{PLOTLY.read_text(encoding='utf-8')}</script>")
 
 
 def build_header() -> str:

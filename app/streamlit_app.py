@@ -1,10 +1,11 @@
 """MIZAN product page. Run with: streamlit run app/streamlit_app.py
 
 Every number is read from artifacts/heldout_results.json through mizan.story and mizan.page. Nothing is
-re-evaluated. Only "Route with MIZAN" can make a live call, on a button press, when an API key exists.
+re-evaluated. The live form is hidden unless MIZAN_LIVE_LAB=1. It then calls a model only on a button press, when an API key exists.
 """
 from __future__ import annotations
 
+import os
 import sys
 import urllib.error
 from pathlib import Path
@@ -28,8 +29,12 @@ except ImportError:  # dotenv optional: the app then runs on recorded results un
 
 LIVE_ERRORS = (ApiError, BudgetError, urllib.error.URLError, TimeoutError, OSError, RuntimeError)
 FIELDS = ["try_q", "try_a", "try_b", "try_c", "try_d", "try_e"]
-# First-paint heights only. Each iframe then sizes itself to its content.
-TOP_HEIGHT, BOTTOM_HEIGHT = 3400, 5200
+# First-paint height only. The iframe then sizes itself to its content.
+PAGE_HEIGHT = 8000
+
+
+def live_lab_enabled() -> bool:
+    return os.environ.get("MIZAN_LIVE_LAB") == "1"
 
 
 def source_version() -> float:
@@ -45,7 +50,7 @@ def load_documents(version: float) -> dict:
     examples = S.load_json(S.EXAMPLES) if S.EXAMPLES.exists() else None
     per_item = S.load_json(S.PER_ITEM)
     return {"res": res, "examples": examples, "css": P.shell_css(), "header": P.build_header(),
-            "top": P.build_top(res, examples), "bottom": P.build_bottom(res, per_item, examples)}
+            "page": P.build_page(res, per_item, examples)}
 
 
 def load_example(example: dict) -> None:
@@ -105,9 +110,9 @@ def main() -> None:
     docs = load_documents(source_version())
     st.html(docs["css"])
     st.html(docs["header"])
-    components.html(docs["top"], height=TOP_HEIGHT, scrolling=False)
-    try_section(docs)
-    components.html(docs["bottom"], height=BOTTOM_HEIGHT, scrolling=False)
+    components.html(docs["page"], height=PAGE_HEIGHT, scrolling=False)
+    if live_lab_enabled():  # stays out of the main flow until the owner approves it
+        try_section(docs)
 
 
 main()

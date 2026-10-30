@@ -1,0 +1,321 @@
+<section class="s s-hero" id="overview">
+  <div class="wrap hero-grid">
+    <div class="hero-left">
+      <p class="eyebrow">{{eyebrow}}</p>
+      <h1>{{headline}}</h1>
+      <p class="sub">{{subheadline}}</p>
+      <div class="chips" data-group="hero">
+        <button class="chip x-toggle" type="button" aria-expanded="false" aria-controls="hx-points">{{chip_points}}<span class="hint">Details</span></button>
+        <button class="chip x-toggle" type="button" aria-expanded="false" aria-controls="hx-errors">{{chip_errors}}<span class="hint">Details</span></button>
+        <button class="chip x-toggle" type="button" aria-expanded="false" aria-controls="hx-n">{{chip_n}}<span class="hint">Details</span></button>
+      </div>
+      <div class="x-body" id="hx-points"><div>{{detail_points}}</div></div>
+      <div class="x-body" id="hx-errors"><div>{{detail_errors}}</div></div>
+      <div class="x-body" id="hx-n"><div>{{detail_n}}</div></div>
+      <div class="ctas">
+        <a class="btn primary" href="#demo" data-go="demo">Try the demo</a>
+        <a class="btn ghost" href="#results" data-go="results">See the evidence</a>
+      </div>
+      <p class="tradeoff">{{tradeoff}}</p>
+    </div>
+
+    <div class="hero-right">
+      <div class="hero-orbit">
+        <svg class="scale" viewBox="0 0 640 640" aria-hidden="true">
+          <g class="ring ring-a">
+            <circle cx="320" cy="320" r="304" fill="none" stroke="#1C5A5F" stroke-width="2"/>
+            <circle cx="320" cy="16" r="5" fill="#C6F23A"/>
+            <circle cx="624" cy="320" r="4" fill="#2EC4D6"/>
+            <circle cx="105" cy="535" r="4" fill="#FFFFFF" opacity=".7"/>
+          </g>
+          <g class="ring ring-b">
+            <circle cx="320" cy="320" r="246" fill="none" stroke="#1C5A5F" stroke-width="2" stroke-dasharray="3 9" stroke-linecap="round"/>
+            <circle cx="320" cy="566" r="4" fill="#2EC4D6"/>
+            <circle cx="146" cy="146" r="4" fill="#C6F23A"/>
+          </g>
+        </svg>
+        <div class="hero-metric">
+          <span class="hero-num">{{metric_value}}</span>
+          <span class="hero-lab">{{metric_label}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s s-problem" id="problem">
+  <div class="wrap">
+    <span class="label">Scenario</span>
+    <h2>One million requests. One model?</h2>
+    <div class="problem-layout">
+      <div class="problem-grid">
+      <div class="pcard">
+        <h3>Always Large</h3>
+        <p>Higher quality baseline</p>
+        <p>Premium compute on every request</p>
+      </div>
+      <div class="pcard">
+        <h3>Always Small</h3>
+        <p>Lower cost</p>
+        <p>Higher error risk</p>
+      </div>
+      <div class="pcard best">
+        <h3>MIZAN</h3>
+        <p>Starts small</p>
+        <p>Escalates with evidence</p>
+      </div>
+    </div>
+      <div class="problem-scale">
+        <div class="stage" id="stage" data-active="1">
+        <svg class="scale" viewBox="0 0 640 640" aria-hidden="true">
+          <g class="ring ring-a">
+            <circle cx="320" cy="320" r="304" fill="none" stroke="#1C5A5F" stroke-width="2"/>
+            <circle cx="320" cy="16" r="5" fill="#C6F23A"/>
+            <circle cx="624" cy="320" r="4" fill="#2EC4D6"/>
+            <circle cx="105" cy="535" r="4" fill="#FFFFFF" opacity=".7"/>
+          </g>
+          <g class="ring ring-b">
+            <circle cx="320" cy="320" r="246" fill="none" stroke="#1C5A5F" stroke-width="2" stroke-dasharray="3 9" stroke-linecap="round"/>
+            <circle cx="320" cy="566" r="4" fill="#2EC4D6"/>
+            <circle cx="146" cy="146" r="4" fill="#C6F23A"/>
+          </g>
+          <g transform="translate(140 149) scale(3)">
+            <g class="part p-gate">
+              <line x1="60" y1="26" x2="60" y2="100" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+              <line x1="40" y1="104" x2="80" y2="104" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+            </g>
+            <g class="beam">
+              <line class="part p-gate" x1="18" y1="40" x2="102" y2="40" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+              <g class="pan pan-l part p-small">
+                <line x1="18" y1="40" x2="18" y2="60" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+                <path d="M3 60 A15 15 0 0 0 33 60 Z" fill="#C6F23A"/>
+              </g>
+              <g class="pan pan-r part p-large">
+                <line x1="102" y1="40" x2="102" y2="60" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+                <path d="M87 60 A15 15 0 0 0 117 60 Z" fill="#2EC4D6"/>
+              </g>
+            </g>
+            <g class="part p-request">
+              <path class="diamond" d="M60 6 L70 16 L60 26 L50 16 Z" fill="#C6F23A"/>
+            </g>
+          </g>
+        </svg>
+        <button class="pt pt-1" type="button" data-p="1" aria-label="Step 1, Arabic request. Show explanation."><i>1</i><span>Arabic request</span></button>
+        <button class="pt pt-2 lime" type="button" data-p="2" aria-label="Step 2, Small model answers first. Show explanation and tilt the scale toward the small model."><i>2</i><span>Small model answers first</span></button>
+        <button class="pt pt-3" type="button" data-p="3" aria-label="Step 3, Confidence is weighed. Show explanation."><i>3</i><span>Confidence is weighed</span></button>
+        <button class="pt pt-4 cyan" type="button" data-p="4" aria-label="Step 4, Large model only if needed. Show explanation and tilt the scale toward the large model."><i>4</i><span>Large model only if needed</span></button>
+      </div>
+      <div class="scale-card" id="scale-card" aria-live="polite"><strong></strong><p></p></div>
+      </div>
+      <div class="problem-route">
+        <svg class="route route-tall" viewBox="0 0 360 620" role="img" aria-label="An Arabic task goes to the economical model and then the confidence gate. High confidence returns the answer. Low confidence or invalid output goes to the stronger model, which returns the answer.">
+      <path class="rl" d="M180 58 V90"/><path class="fl" d="M180 58 V90"/>
+      <path class="rl" d="M180 148 V180"/><path class="fl" d="M180 148 V180"/>
+      <path class="rl lime" d="M130 238 C90 270 90 300 90 340"/><path class="fl lime" d="M130 238 C90 270 90 300 90 340"/>
+      <path class="rl amber" d="M230 238 C270 270 270 300 270 340"/><path class="fl amber" d="M230 238 C270 270 270 300 270 340"/>
+      <path class="rl cyan" d="M270 398 V500"/><path class="fl cyan" d="M270 398 V500"/>
+      <text class="bl lime" x="44" y="285" text-anchor="middle"><tspan x="44">Confidence</tspan><tspan x="44" dy="18">high</tspan></text>
+      <text class="bl amber" x="300" y="275" text-anchor="middle"><tspan x="300">Low or</tspan><tspan x="300" dy="18">invalid</tspan></text>
+      <g class="node"><rect x="80" y="2" width="200" height="56" rx="12"/><text x="180" y="36" text-anchor="middle">Arabic task</text></g>
+      <g class="node nlime"><rect x="70" y="92" width="220" height="56" rx="12"/><text x="180" y="126" text-anchor="middle">Economical model</text></g>
+      <g class="node gate"><rect x="80" y="182" width="200" height="56" rx="28"/><text x="180" y="216" text-anchor="middle">Confidence gate</text></g>
+      <g class="node end nlime"><rect x="4" y="342" width="160" height="56" rx="12"/><text x="84" y="376" text-anchor="middle">Return answer</text></g>
+      <g class="node ncyan"><rect x="186" y="342" width="170" height="56" rx="12"/><text x="271" y="376" text-anchor="middle">Stronger model</text></g>
+      <g class="node end ncyan"><rect x="186" y="502" width="170" height="56" rx="12"/><text x="271" y="536" text-anchor="middle">Return answer</text></g>
+    </svg>
+      </div>
+    </div>
+    <p class="statement">Saudi Arabia is building Arabic AI across infrastructure, models, and applications. At that scale, efficiency cannot be an afterthought.</p>
+  </div>
+</section>
+
+<section class="s s-demo" id="demo">
+  <div class="wrap">
+    <span class="label">Demo</span>
+    <h2>Two real requests from the <span class="nb">held-out</span> run</h2>
+    <div class="seg" role="tablist" aria-label="Choose an example">
+      <button class="seg-btn" type="button" role="tab" id="tab-high" aria-selected="true" aria-controls="panel-high"><span class="dot lime"></span><strong>High-confidence example</strong><span>The economical model keeps the answer</span></button>
+      <button class="seg-btn" type="button" role="tab" id="tab-low" aria-selected="false" aria-controls="panel-low" tabindex="-1"><span class="dot amber"></span><strong>Lower-confidence example</strong><span>The request goes to the stronger model</span></button>
+    </div>
+    <div class="demo-panel" role="tabpanel" id="panel-high" aria-labelledby="tab-high">{{demo_high}}</div>
+    <div class="demo-panel" role="tabpanel" id="panel-low" aria-labelledby="tab-low" hidden>{{demo_low}}</div>
+    <p class="fine">Questions from ArabicMMLU (Koto et al., Findings of ACL 2024), non-commercial license. Full attribution is in the technical details.</p>
+  </div>
+</section>
+
+<section class="s s-results" id="results">
+  <div class="wrap">
+    <span class="label">Results</span>
+    <h2>The balance MIZAN found</h2>
+    <div class="metrics" data-group="results">
+      <div class="mcard lead">
+        <button class="x-toggle" type="button" aria-expanded="false" aria-controls="mx-saving">
+          <span class="m-num lime">{{card_saving}}</span><span class="m-lab">lower measured inference cost</span><span class="hint">Details</span>
+        </button>
+        <div class="x-body" id="mx-saving"><div>{{detail_saving}}</div></div>
+      </div>
+      <div class="mcard">
+        <button class="x-toggle" type="button" aria-expanded="false" aria-controls="mx-points">
+          <span class="m-num">{{card_points}}</span><span class="m-lab">accuracy points vs always-small</span><span class="hint">Details</span>
+        </button>
+        <div class="x-body" id="mx-points"><div>{{detail_points}}</div></div>
+      </div>
+      <div class="mcard">
+        <button class="x-toggle" type="button" aria-expanded="false" aria-controls="mx-errors">
+          <span class="m-num">{{card_errors}}</span><span class="m-lab">fewer accepted errors vs matched random acceptance</span><span class="hint">Details</span>
+        </button>
+        <div class="x-body" id="mx-errors"><div>{{detail_errors}}</div></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head"><h3>Cost against accuracy</h3><p id="chart-hint">Hover any point for details. Click MIZAN to emphasize the callouts.</p></div>
+      <div id="chart" role="img" aria-label="Scatter chart of accuracy against relative inference cost for each strategy, with MIZAN highlighted."></div>
+    </div>
+  </div>
+</section>
+
+<section class="s s-errors" id="accepted-errors">
+  <div class="wrap errors-grid">
+    <div class="errors-hero">
+      <span class="errors-num">{{errors_big}}</span>
+    </div>
+    <div class="errors-body">
+      <h2>{{errors_big}} fewer accepted errors</h2>
+      <p class="sub">Compared with accepting answers at random at the same rate.</p>
+      <div class="ebars" id="ebars">
+        <div class="ebar" tabindex="0" data-tip="MIZAN: {{error_mizan}} of the answers it accepted were wrong.">
+          <div class="ebar-top"><span>MIZAN</span><b>{{error_mizan}}</b></div>
+          <div class="ebar-track"><i class="fill-lime" style="width:{{error_mizan_w}}%"></i></div>
+        </div>
+        <div class="ebar" tabindex="0" data-tip="Matched random: {{error_random}}. It keeps the same share of answers as MIZAN, chosen at random instead of by confidence.">
+          <div class="ebar-top"><span>Matched random</span><b>{{error_random}}</b></div>
+          <div class="ebar-track"><i class="fill-muted"></i></div>
+        </div>
+        <div class="etip" id="etip" role="status"></div>
+      </div>
+      <div class="x-wrap" data-group="errors">
+        <button class="linkish x-toggle" type="button" aria-expanded="false" aria-controls="ex-errors"><span class="hint">Details</span></button>
+        <div class="x-body" id="ex-errors"><div>{{detail_errors}}</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s s-robust" id="robustness">
+  <div class="wrap">
+    <span class="label">Robustness</span>
+    <h2>Confidence held steady after the options moved</h2>
+    <div class="robust-grid">
+      <div class="robust-left">
+        <div class="toggle" role="group" aria-label="Option order">
+          <button type="button" id="rb-original" aria-pressed="true">Original</button>
+          <button type="button" id="rb-shuffled" aria-pressed="false">Options shuffled</button>
+        </div>
+        <div class="optstack" id="optstack" dir="rtl" lang="ar"></div>
+        <p class="fine">One held-out question, shown in its two recorded option orders.</p>
+      </div>
+      <div class="robust-right">
+        <span class="auroc-k">AUROC of the confidence signal</span>
+        <span class="auroc" id="rb-auroc">{{auroc_original}}</span>
+        <p>How well the confidence signal separates right answers from wrong ones. It barely moved when every question's options changed order.</p>
+        <span class="check {{robust_badge_class}}">{{robust_badge}}</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s s-impact" id="impact">
+  <div class="wrap">
+    <span class="label">Projection</span>
+    <h2>What this means at scale</h2>
+    <div class="impact-card">
+      <label for="impact-range">Number of similar tasks <output id="impact-n"></output></label>
+      <input type="range" id="impact-range" min="0" max="300" step="1" value="200">
+      <div class="range-ends" aria-hidden="true"><span>10,000</span><span>10,000,000</span></div>
+      <div class="impact-nums">
+        <div><span class="i-v lime" id="impact-handled"></span><span class="i-k">handled without a large-model call</span></div>
+        <div><span class="i-v amber" id="impact-esc"></span><span class="i-k">escalated</span></div>
+      </div>
+      <div class="split" id="impact-split" role="img" aria-label="{{impact_handled_share}} handled without a large-model call, {{impact_esc_share}} escalated">
+        <i class="fill-lime" data-w="{{impact_handled_w}}" style="width:{{impact_handled_w}}%"><span>{{impact_handled_share}}</span></i>
+        <i class="fill-amber" data-w="{{impact_esc_w}}" style="width:{{impact_esc_w}}%"><span>{{impact_esc_share}}</span></i>
+      </div>
+      <p class="impact-saving"><b>{{impact_saving}}</b> projected measured-cost reduction on this workload</p>
+      <p class="fine">Projected from measured held-out routing rates.</p>
+    </div>
+    <p class="statement">For Arabic AI moving from demos to daily services, model selection becomes an infrastructure decision.</p>
+  </div>
+</section>
+
+<section class="s s-replay" id="replay">
+  <div class="wrap">
+    <span class="label">Recorded evaluation run</span>
+    <h2>Replay the {{replay_n}}-question <span class="nb">held-out</span> evaluation</h2>
+    <div class="replay-grid">
+      <div class="replay-main">
+        <div class="replay-kpis">
+          <div class="kpi lead"><span class="kpi-v lime" id="r-saving"></span><span class="kpi-k">Measured saving vs always gpt-4.1</span></div>
+          <div class="kpi"><span class="kpi-v" id="r-accuracy"></span><span class="kpi-k">Accuracy</span></div>
+          <div class="kpi"><span class="kpi-v" id="r-handled"></span><span class="kpi-k">Handled economically</span></div>
+          <div class="kpi"><span class="kpi-v" id="r-cost"></span><span class="kpi-k">Cost as a share of always gpt-4.1</span></div>
+        </div>
+        <div class="progress" id="r-progress-wrap" role="progressbar" aria-label="Requests replayed" aria-valuemin="0" aria-valuemax="{{replay_n}}"><i id="r-progress"></i></div>
+        <div class="replay-foot">
+          <span class="count"><b id="r-count"></b> of {{replay_n}} requests</span>
+          <button class="btn primary small" type="button" id="r-play">Replay</button>
+        </div>
+      </div>
+      <div class="replay-feed">
+        <div class="tag">Last routed requests</div>
+        <ul id="r-feed" aria-live="off"></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s s-tech" id="technical">
+  <div class="wrap">
+    <span class="label">Technical details</span>
+    <h2>The evidence behind every number</h2>
+    <div class="tech-body">
+        <div class="tabs" role="tablist" aria-label="Technical evidence">
+          <button type="button" role="tab" id="t-conf" aria-selected="true" aria-controls="p-conf">Confidence</button>
+          <button type="button" role="tab" id="t-cost" aria-selected="false" aria-controls="p-cost" tabindex="-1">Tokens &amp; Cost</button>
+          <button type="button" role="tab" id="t-models" aria-selected="false" aria-controls="p-models" tabindex="-1">Models</button>
+          <button type="button" role="tab" id="t-repro" aria-selected="false" aria-controls="p-repro" tabindex="-1">Reproducibility</button>
+        </div>
+        <div class="tab-panel" role="tabpanel" id="p-conf" aria-labelledby="t-conf">{{tech_confidence}}</div>
+        <div class="tab-panel" role="tabpanel" id="p-cost" aria-labelledby="t-cost" hidden>{{tech_cost}}</div>
+        <div class="tab-panel" role="tabpanel" id="p-models" aria-labelledby="t-models" hidden>{{tech_models}}</div>
+        <div class="tab-panel" role="tabpanel" id="p-repro" aria-labelledby="t-repro" hidden>{{tech_repro}}</div>
+    </div>
+  </div>
+</section>
+
+<section class="s s-how" id="how">
+  <div class="wrap">
+    <span class="label">How it works</span>
+    <h2>Four steps, every request</h2>
+    <ol class="steps">
+      <li><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 34 A16 16 0 0 0 40 34 Z" fill="#C6F23A"/><line x1="24" y1="8" x2="24" y2="24" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/></svg><h3>Answer economically</h3><p>The economical model answers every request first.</p></li>
+      <li><svg viewBox="0 0 48 48" aria-hidden="true"><line x1="8" y1="38" x2="8" y2="22" stroke="#C6F23A" stroke-width="6" stroke-linecap="round"/><line x1="24" y1="38" x2="24" y2="10" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/><line x1="40" y1="38" x2="40" y2="28" stroke="#2EC4D6" stroke-width="6" stroke-linecap="round"/></svg><h3>Read confidence</h3><p>The answer itself carries the signal, so no extra call is needed.</p></li>
+      <li><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 38 H24 V12" fill="none" stroke="#F5A524" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 18 L24 10 L32 18" fill="none" stroke="#2EC4D6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><h3>Escalate uncertainty</h3><p>A narrow gap or invalid output goes to the stronger model.</p></li>
+      <li><svg viewBox="0 0 48 48" aria-hidden="true"><line x1="6" y1="16" x2="42" y2="16" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/><line x1="24" y1="8" x2="24" y2="40" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/><path d="M4 26 A7 7 0 0 0 18 26 Z" fill="#C6F23A"/><path d="M30 26 A7 7 0 0 0 44 26 Z" fill="#2EC4D6"/></svg><h3>Measure the trade-off</h3><p>Cost and accuracy are reported together on held-out questions.</p></li>
+    </ol>
+  </div>
+</section>
+
+<footer class="s s-foot" id="footer">
+  <div class="wrap foot">
+    <p class="closing">Not every question needs the biggest model. MIZAN helps find the ones that do.</p>
+    <div class="foot-row">
+      <img src="data:image/png;base64,{{logo_png}}" alt="MIZAN logo" width="72" height="72">
+      <div class="foot-text">
+        <strong>MIZAN — Adaptive Arabic AI Routing</strong>
+        <span>Built solo by Abdulaziz Alothman</span>
+        <span>HUMAIN Hackathon — Challenge 2</span>
+      </div>
+      <div class="foot-links">{{footer_github}}<a class="flink" href="#top" data-go="top">Back to top</a></div>
+    </div>
+  </div>
+</footer>

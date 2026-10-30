@@ -7,7 +7,7 @@ html, body, .stApp { background: var(--bg) !important; }
 [data-testid="stMain"] [data-testid="stVerticalBlock"] { gap: 0; }
 iframe { display: block; border: 0; width: 100%; }
 
-.mz-head { position: fixed; z-index: 1000; top: 0; left: 0; right: 0; height: var(--mz-head); display: flex; align-items: center; gap: 28px; padding: 0 max(32px, calc((100% - 1136px) / 2)); background: rgba(11,46,48,.94); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(28,90,95,.8); font-family: var(--body); }
+.mz-head { position: fixed; z-index: 1000; top: 0; left: 0; right: 0; height: var(--mz-head); display: flex; align-items: center; gap: 28px; padding: 0 max(32px, calc((100% - 1296px) / 2)); background: rgba(11,46,48,.94); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(28,90,95,.8); font-family: var(--body); }
 .mz-brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none !important; color: var(--text) !important; font: 700 1.15rem var(--head); }
 .mz-brand .mark { display: inline-block; width: 34px; height: 34px; }
 .mz-head nav { display: flex; gap: 24px; margin-left: auto; }
@@ -17,7 +17,7 @@ iframe { display: block; border: 0; width: 100%; }
 .mz-gh { padding: 8px 16px; border: 1px solid var(--muted); border-radius: 9px; color: var(--text) !important; text-decoration: none !important; font-size: .88rem; font-weight: 600; white-space: nowrap; }
 .mz-gh:hover { border-color: var(--lime); }
 
-.st-key-try { background: var(--bg); padding: 104px max(32px, calc((100% - 1136px) / 2)) !important; border-top: 1px solid rgba(28,90,95,.7); gap: 14px !important; }
+.st-key-try { background: var(--bg); padding: 104px max(32px, calc((100% - 1296px) / 2)) !important; border-top: 1px solid rgba(28,90,95,.7); gap: 14px !important; }
 .st-key-try [data-testid="stVerticalBlock"] { gap: 14px; }
 .st-key-try label, .st-key-try button, .st-key-try button p, .st-key-try label p { font-family: var(--body) !important; }
 .mz-try-label { display: inline-block; color: var(--cyan); font: 600 .82rem var(--body); letter-spacing: .08em; text-transform: uppercase; }

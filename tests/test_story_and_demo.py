@@ -236,7 +236,7 @@ def examples():
 def visible(document: str, drop_technical: bool = False) -> str:
     """The document's markup without scripts and styles, and optionally without the technical section."""
     text = re.sub(r"<(script|style)\b.*?</\1>", "", document, flags=re.S)
-    return re.sub(r'<details class="tech".*?</details>\s*</div>\s*</section>', "", text, flags=re.S) if drop_technical else text
+    return re.sub(r'<section class="s s-tech".*?</section>', "", text, flags=re.S) if drop_technical else text
 
 
 def script_data(document: str) -> dict:
@@ -244,35 +244,35 @@ def script_data(document: str) -> dict:
 
 
 def test_templates_hold_no_typed_results():
-    for name in ("top.html", "bottom.html"):
-        text = (P.WEB / name).read_text(encoding="utf-8")
-        text = re.sub(r"\{\{\w+\}\}%?", "", text)
-        assert not re.findall(r"\d+(?:\.\d+)?\s*%", text), name
-        assert "$" not in text, name
+    text = (P.WEB / "page.html").read_text(encoding="utf-8")
+    text = re.sub(r"\{\{\w+\}\}%?", "", text)
+    assert not re.findall(r"\d+(?:\.\d+)?\s*%", text)
+    assert "$" not in text
 
 
 def test_every_template_token_has_a_value(res, examples):
-    assert "{{" not in visible(P.build_top(res, examples)) and "{{" not in visible(P.build_bottom(res, S.load_json(S.PER_ITEM), examples))
+    assert "{{" not in visible(P.build_page(res, S.load_json(S.PER_ITEM), examples))
     with pytest.raises(KeyError, match="nope"):
         P.fill("{{nope}}", {})
 
 
 def test_page_values_come_from_the_results_file(res, examples):
     per = S.load_json(S.PER_ITEM)
-    top, bottom = P.build_top(res, examples), P.build_bottom(res, per, examples)
+    page = P.build_page(res, per, examples)
     for phrase in ("66%", "LOWER MEASURED INFERENCE COST", "+5.4 pts vs always-small", "40% fewer accepted errors", "500 held-out questions",
                    "79.0% MIZAN accuracy vs 82.6% for always gpt-4.1.", "+2.6 to +8.4 points", "40.08%"):
-        assert phrase in visible(top), phrase
+        assert phrase in visible(page), phrase
     for phrase in ("62.44% to 70.48%", "15.82%", "26.40%", "0.821", "Preregistered robustness check passed", "74.6%", "25.4%", "Projected from measured held-out routing rates."):
-        assert phrase in visible(bottom), phrase
+        assert phrase in visible(page), phrase
     changed = copy.deepcopy(res)
     changed["original"]["mechanism"]["coverage"] = 0.5
-    assert "50.0% never needed it" in P.build_top(changed, examples)
-    assert "50.0%" in visible(P.build_bottom(changed, per, examples))
+    changed_page = P.build_page(changed, per, examples)
+    assert "50.0% never needed it" in changed_page
+    assert "50.0%" in visible(changed_page)
 
 
 def test_scale_dims_only_during_an_interaction():
-    css, top = (P.WEB / "page.css").read_text(encoding="utf-8"), (P.WEB / "top.html").read_text(encoding="utf-8")
+    css, top = (P.WEB / "page.css").read_text(encoding="utf-8"), (P.WEB / "page.html").read_text(encoding="utf-8")
     assert '.stage[data-highlight="1"] .part:not(.p-request)' in css
     assert '.stage[data-active' not in css
     assert 'data-active="1"' in top and "data-highlight" not in top  # the default card shows with nothing dimmed
@@ -291,11 +291,10 @@ def test_forty_percent_detail_does_not_invent_an_interval(res):
 
 def test_dollars_stay_inside_the_technical_section(res, examples):
     per = S.load_json(S.PER_ITEM)
-    top, bottom = P.build_top(res, examples), P.build_bottom(res, per, examples)
-    assert "$" in visible(top)
-    assert "$" not in visible(top, drop_technical=True)
-    assert "$" not in visible(bottom)
-    assert "$" not in json.dumps(script_data(bottom)["replay"])
+    page = P.build_page(res, per, examples)
+    assert "$" in visible(page)
+    assert "$" not in visible(page, drop_technical=True)
+    assert "$" not in json.dumps(script_data(page)["replay"])
 
 
 def test_raw_values_only_in_raw_diagnostics(res, examples):
@@ -421,7 +420,7 @@ def test_github_link_is_hidden_unless_a_real_https_url_is_configured(tmp_path, m
 def test_assets_exist_and_the_cover_is_not_embedded():
     assert P.LOGO.exists() and (P.ASSETS / "cover-reference.png").exists()
     assert "plotly.js (basic - minified) v2.35.2" in P.PLOTLY.read_text(encoding="utf-8")[:200]
-    for name in ("top.html", "bottom.html", "page.css", "page.js"):
+    for name in ("page.html", "page.css", "page.js"):
         assert "cover-reference" not in (P.WEB / name).read_text(encoding="utf-8")
     assert "cover-reference" not in (ROOT / "app" / "streamlit_app.py").read_text(encoding="utf-8")
 
@@ -439,35 +438,51 @@ def page_text(at) -> str:
 def app(monkeypatch):
     from streamlit.testing.v1 import AppTest
     monkeypatch.setenv("MIZAN_DISABLE_LIVE", "1")
+    monkeypatch.delenv("MIZAN_LIVE_LAB", raising=False)
     monkeypatch.setattr(client, "chat", lambda *a, **k: pytest.fail("the app called the network"))
     at = AppTest.from_file(str(ROOT / "app" / "streamlit_app.py"), default_timeout=60)
     return at.run()
+
+
+@pytest.fixture
+def lab(monkeypatch):
+    """The app with the live form switched on, which only happens on the owner's approval."""
+    from streamlit.testing.v1 import AppTest
+    monkeypatch.setenv("MIZAN_DISABLE_LIVE", "1")
+    monkeypatch.setenv("MIZAN_LIVE_LAB", "1")
+    monkeypatch.setattr(client, "chat", lambda *a, **k: pytest.fail("the app called the network"))
+    return AppTest.from_file(str(ROOT / "app" / "streamlit_app.py"), default_timeout=60).run()
+
+
+SECTION_IDS = ["overview", "problem", "demo", "results", "accepted-errors", "robustness", "impact", "replay", "technical", "footer"]
 
 
 def test_app_renders_every_section_in_order_without_a_key(app):
     assert not app.exception
     bodies = [el.proto.body for el in app.get("html")]
     frames = [el.proto.srcdoc for el in app.get("iframe")]
-    header = next(b for b in bodies if "<header" in b)
-    free = " ".join(b for b in bodies if "mz-try" in b and "<style" not in b)
-    text = " ".join(visible(part) for part in (header, frames[0], free, frames[1]))
-    order = ["mz-head", "Overview", "Technical details", "Built for efficient Arabic AI at scale", "Does every Arabic task need the biggest model?", "66%", "LOWER MEASURED INFERENCE COST",
-             "One million requests. One model?", "Always Large", "Always Small", "Saudi Arabia is building Arabic AI", "Confidence high",
-             "Confidence low or invalid", "Economical model", "Confidence gate", "Stronger model", "High-confidence example", "View technical evidence", "Confidence", "Tokens &amp; Cost", "Models", "Reproducibility",
-             "Try your own question", "Prototype evaluated on Arabic multiple-choice tasks.", "Do not enter sensitive or personal information.",
-             "Recorded evaluation run", "500-question", "The balance MIZAN found", "fewer accepted errors", "Confidence held steady after the options moved", "Preregistered robustness check passed",
-             "What this means at scale", "model selection becomes an infrastructure decision", "Answer economically", "Read confidence", "Escalate uncertainty", "Measure the trade-off",
-             "Not every question needs the biggest model. MIZAN helps find the ones that do.", "MIZAN — Adaptive Arabic AI Routing", "Built solo by Abdulaziz Alothman", "HUMAIN Hackathon — Challenge 2", "Back to top"]
-    at = -1
-    for phrase in order:
-        pos = text.find(phrase, at + 1)
-        assert pos > at, phrase
-        at = pos
+    assert len(frames) == 1
+    assert any("<header" in b for b in bodies)
+    text = visible(frames[0])
+    positions = [text.find(f'id="{i}"') for i in SECTION_IDS]
+    assert -1 not in positions and positions == sorted(positions), positions
     assert "directional, not conclusive" in text and S.SPLIT_SENTENCE in text
     assert "100 held-out" not in text and "first 100" not in text
-    assert '<details class="tech" id="technical">' in text  # collapsed: no open attribute
     for word in S.FORBIDDEN:
         assert word not in text.lower()
+
+
+def test_every_nav_link_has_a_section(app):
+    frame = app.get("iframe")[0].proto.srcdoc
+    for target, _ in P.NAV:
+        assert f'id="{target}"' in frame, target
+        assert f'href="#{target}"' in P.build_header(), target
+
+
+def test_live_lab_is_hidden_by_default(app):
+    text = visible(page_text(app))
+    assert "Try your own question" not in text and "mz-try-title" not in text
+    assert not list(app.button)
 
 
 REPO_URL = "https://github.com/2xazo/MIZAN-ADAPTIVE-ARABIC-AI-ROUTING"
@@ -482,12 +497,13 @@ def test_app_and_readme_link_to_the_configured_repository(app):
 
 def test_app_chart_and_scripts_are_embedded(app):
     frames = [el.proto.srcdoc for el in app.get("iframe")]
-    assert len(frames) == 2
-    assert "plotly.js (basic - minified)" in frames[1] and "plotly.js (basic - minified)" not in frames[0]
-    assert script_data(frames[0])["scale"] and script_data(frames[1])["replay"]["final"]["saving"] == "66.45%"
+    assert len(frames) == 1
+    assert "plotly.js (basic - minified)" in frames[0]
+    assert script_data(frames[0])["scale"] and script_data(frames[0])["replay"]["final"]["saving"] == "66.45%"
 
 
-def test_app_free_input_validates_and_sends_nothing_without_a_key(app):
+def test_app_free_input_validates_and_sends_nothing_without_a_key(lab):
+    app = lab
     app.button(key="btn_route").click().run()
     assert not app.exception
     assert "Enter a question." in page_text(app) and "Fill in options A, B, C, D." in page_text(app)
@@ -500,7 +516,8 @@ def test_app_free_input_validates_and_sends_nothing_without_a_key(app):
 
 
 @pytest.mark.skipif(not S.EXAMPLES.exists(), reason="demo_examples.json is built locally")
-def test_app_load_example_fills_the_form(app):
+def test_app_load_example_fills_the_form(lab):
+    app = lab
     app.button(key="btn_load").click().run()
     assert not app.exception
     high = S.load_json(S.EXAMPLES)["examples"]["high_confidence"]
@@ -513,6 +530,7 @@ def test_app_live_route_only_on_button_press_with_fake_network(monkeypatch, isol
     from streamlit.testing.v1 import AppTest
     monkeypatch.delenv("MIZAN_DISABLE_LIVE", raising=False)
     monkeypatch.setenv("OPENAI_API_KEY", "test-key-not-real")
+    monkeypatch.setenv("MIZAN_LIVE_LAB", "1")
     fake = FakeChat(confident(), unsure())
     monkeypatch.setattr(client, "chat", fake)
     at = AppTest.from_file(str(ROOT / "app" / "streamlit_app.py"), default_timeout=60).run()
