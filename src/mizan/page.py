@@ -336,10 +336,14 @@ def tech_repro(res: dict, examples: dict | None) -> str:
 
 def replay_data(res: dict, per_item: dict) -> dict:
     o = res["original"]
-    rows = S.replay_rows(per_item)
+    # The count is explicit so this never depends on a default in another module. A long-running
+    # Streamlit server keeps imported modules in memory, so an older `story` can sit beside this file.
+    rows = S.replay_rows(per_item, len(per_item["ids"]))
     totals = S.replay_totals(rows)
     if totals["processed"] != o["n"] or totals["escalated"] != o["mizan"]["escalated_items"] or totals["accuracy"] != o["mizan"]["accuracy"]:
-        raise ValueError("The per-item table does not reproduce the recorded results.")
+        raise ValueError("The per-item table does not reproduce the recorded results: "
+                         f"requests {totals['processed']} vs {o['n']}, escalated {totals['escalated']} vs {o['mizan']['escalated_items']}, "
+                         f"accuracy {totals['accuracy']} vs {o['mizan']['accuracy']}.")
     top = totals["always_large_cost_usd"]
     return {"ids": per_item["ids"], "esc": [int(r["escalated"]) for r in rows], "ok": [int(r["correct"]) for r in rows],
             "cost": [r["cost_usd"] / top for r in rows], "always": [r["always_large_cost_usd"] / top for r in rows],

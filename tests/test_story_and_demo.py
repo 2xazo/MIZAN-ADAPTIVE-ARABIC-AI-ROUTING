@@ -316,6 +316,34 @@ def test_replay_refuses_a_table_that_disagrees_with_the_results(res):
         P.replay_data(wrong, S.load_json(S.PER_ITEM))
 
 
+def test_replay_does_not_depend_on_the_default_row_count_in_story(res, monkeypatch):
+    # A server started before the redesign keeps the old story module, whose default was 100 rows.
+    current = S.replay_rows
+    monkeypatch.setattr(S, "replay_rows", lambda per_item, n=100: current(per_item, n))
+    assert len(P.replay_data(res, S.load_json(S.PER_ITEM))["esc"]) == 500
+
+
+@pytest.mark.parametrize("field, value", [("n", 499), ("accuracy", 0.80)])
+def test_replay_check_stays_strict_and_names_the_mismatch(res, field, value):
+    wrong = copy.deepcopy(res)
+    (wrong["original"] if field == "n" else wrong["original"]["mizan"])[field] = value
+    with pytest.raises(ValueError, match="does not reproduce the recorded results: requests 500 vs"):
+        P.replay_data(wrong, S.load_json(S.PER_ITEM))
+
+
+def test_replay_refuses_a_truncated_table(res):
+    per = copy.deepcopy(S.load_json(S.PER_ITEM))
+    per["ids"] = per["ids"][:100]
+    with pytest.raises(ValueError, match="requests 100 vs 500"):
+        P.replay_data(res, per)
+
+
+def test_readme_states_authorship_exactly():
+    line = ("Built and submitted individually by Abdulaziz Alothman. AI-assisted development tools were used during implementation; "
+            "all product decisions, evaluation design, validation, and final submission are owned by the author.")
+    assert line in (ROOT / "README.md").read_text(encoding="utf-8")
+
+
 def test_chart_uses_relative_cost_and_labels_each_interval(res):
     c = P.chart_data(res)
     by = {p["key"]: p for p in c["points"]}

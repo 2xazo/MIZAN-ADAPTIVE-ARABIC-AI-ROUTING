@@ -47,6 +47,8 @@ HUMAIN Hackathon, Challenge 2: *Deliver AI with Less Compute*.
 
 Repository: [{P.github_url()}]({P.github_url()})
 
+Built and submitted individually by Abdulaziz Alothman. AI-assisted development tools were used during implementation; all product decisions, evaluation design, validation, and final submission are owned by the author.
+
 ## The problem
 
 Sending every Arabic request to the strongest available model is the safe default, and the expensive one. Many requests do not need it, but an application cannot tell which ones without some signal. A trained router or an AI judge on every answer adds cost of its own.
