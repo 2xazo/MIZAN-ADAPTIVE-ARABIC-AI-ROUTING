@@ -9,5 +9,6 @@ textColor = "#FFFFFF"
 gatherUsageStats = false
 
 [client]
+# Minimal toolbar. A browser profile may still show Streamlit's educational prompt once; it is dismissed by hand, not hidden with CSS.
 toolbarMode = "minimal"
 showSidebarNavigation = false
