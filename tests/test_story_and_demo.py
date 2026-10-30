@@ -435,9 +435,14 @@ def test_app_renders_every_section_in_order_without_a_key(app):
         assert word not in text.lower()
 
 
-def test_app_hides_the_github_links_with_the_default_config(app):
+REPO_URL = "https://github.com/2xazo/MIZAN-ADAPTIVE-ARABIC-AI-ROUTING"
+
+
+def test_app_and_readme_link_to_the_configured_repository(app):
+    assert P.github_url() == REPO_URL
     text = page_text(app)
-    assert "View GitHub" not in text and 'class="flink" href="https' not in text
+    assert f'href="{REPO_URL}"' in text and "View GitHub" in text and f'class="flink" href="{REPO_URL}"' in text
+    assert f"]({REPO_URL})" in (ROOT / "README.md").read_text(encoding="utf-8")
 
 
 def test_app_chart_and_scripts_are_embedded(app):

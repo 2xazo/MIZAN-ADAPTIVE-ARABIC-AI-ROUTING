@@ -4,7 +4,7 @@
 """
 import _common  # noqa: F401
 
-from mizan import story as S
+from mizan import page as P, story as S
 from mizan.config import ROOT
 
 
@@ -44,6 +44,8 @@ def render(res: dict) -> str:
 **{h['metric_value']} lower measured inference cost.** {h['evaluation']} {h['tradeoff']}
 
 HUMAIN Hackathon, Challenge 2: *Deliver AI with Less Compute*.
+
+Repository: [{P.github_url()}]({P.github_url()})
 
 ## The problem
 
