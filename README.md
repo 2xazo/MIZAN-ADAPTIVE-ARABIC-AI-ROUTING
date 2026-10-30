@@ -70,7 +70,7 @@ pip install -r requirements.txt
 streamlit run app/streamlit_app.py
 ```
 
-It works without an API key: the two examples show a run labelled "Recorded run", and the replay and evidence sections use recorded results. To enable live calls, copy `.env.example` to `.env` and add your own `OPENAI_API_KEY`. Each press of an example button or "Route this question" then makes a real, paid call with the frozen prompt, settings and threshold. Live spend goes to a separate local ledger, `artifacts/demo_ledger.jsonl`, and stops at $2.00.
+It works without an API key: the two examples show a run labelled "Recorded run", and the replay and evidence sections use recorded results. To enable live calls, copy `.env.example` to `.env` and add your own `OPENAI_API_KEY`. Each press of "Route with MIZAN" then makes a real, paid call with the frozen prompt, settings and threshold. The two examples always show the recorded run. Live spend goes to a separate local ledger, `artifacts/demo_ledger.jsonl`, and stops at $2.00.
 
 ## Recompute offline
 

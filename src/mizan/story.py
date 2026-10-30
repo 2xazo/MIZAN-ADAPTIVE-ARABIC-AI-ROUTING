@@ -17,7 +17,6 @@ RESULTS = ARTIFACTS_DIR / "heldout_results.json"
 PER_ITEM = ARTIFACTS_DIR / "heldout_per_item.json"
 EXAMPLES = ARTIFACTS_DIR / "demo_examples.json"
 
-REPLAY_N = 100
 PROJECTION_TASKS = 1_000_000
 FORBIDDEN = ("unseen", "works with any provider", "only where it adds value", "free verification")
 SPLIT_SENTENCE = "The final evaluation used a subject-by-level-disjoint held-out split; the exact manifest and limitation are documented in GitHub."
@@ -97,12 +96,12 @@ def robustness_rows(res: dict) -> list[dict]:
     return [{"metric": name, "original": fn(o), "shuffled": fn(s)} for name, fn in pick]
 
 
-def replay_rows(per_item: dict, n: int = REPLAY_N) -> list[dict]:
-    """The first `n` held-out items in run order, a fixed rule, with their recorded outcomes."""
+def replay_rows(per_item: dict, n: int | None = None) -> list[dict]:
+    """Held-out items in run order with their recorded outcomes. All of them unless `n` is given."""
     orig, threshold = per_item["original"], per_item["threshold"]
     small, large = orig[SMALL], orig[LARGE]
     rows = []
-    for k in range(n):
+    for k in range(len(per_item["ids"]) if n is None else n):
         margin = small["margin"][k]
         score = math.inf if margin == "inf" else (-math.inf if margin == "-inf" else margin)
         esc = (not small["valid"][k]) or score < threshold

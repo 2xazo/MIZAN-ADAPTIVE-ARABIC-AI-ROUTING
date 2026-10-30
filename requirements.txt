@@ -4,9 +4,7 @@ numpy==2.5.3
 PyYAML==6.0.3
 python-dotenv==1.2.3
 pytest==9.1.1
-# The demo app
+# The demo app. Plotly.js (plotly.js-basic-dist-min 2.35.2, MIT) is vendored in app/assets/vendor, so it is not a pip dependency.
 streamlit==1.66.1
-altair==6.3.0
-pandas==3.1.0
 # Only needed by scripts/prepare_data.py to download ArabicMMLU from Hugging Face
 datasets==3.6.0

@@ -1,0 +1,161 @@
+<section class="s s-hero" id="overview">
+  <div class="wrap hero-grid">
+    <div class="hero-left">
+      <p class="eyebrow">{{eyebrow}}</p>
+      <h1>{{headline}}</h1>
+      <p class="sub">{{subheadline}}</p>
+      <div class="hero-metric">
+        <span class="hero-num">{{metric_value}}</span>
+        <span class="hero-lab">{{metric_label}}</span>
+      </div>
+      <div class="chips" data-group="hero">
+        <button class="chip x-toggle" type="button" aria-expanded="false" aria-controls="hx-points">{{chip_points}}<span class="hint">Details</span></button>
+        <button class="chip x-toggle" type="button" aria-expanded="false" aria-controls="hx-errors">{{chip_errors}}<span class="hint">Details</span></button>
+        <button class="chip x-toggle" type="button" aria-expanded="false" aria-controls="hx-n">{{chip_n}}<span class="hint">Details</span></button>
+      </div>
+      <div class="x-body" id="hx-points"><div>{{detail_points}}</div></div>
+      <div class="x-body" id="hx-errors"><div>{{detail_errors}}</div></div>
+      <div class="x-body" id="hx-n"><div>{{detail_n}}</div></div>
+      <div class="ctas">
+        <a class="btn primary" href="#demo" data-go="demo">Try the demo</a>
+        <a class="btn ghost" href="#results" data-go="results">See the evidence</a>
+      </div>
+      <p class="tradeoff">{{tradeoff}}</p>
+    </div>
+
+    <div class="hero-right">
+      <div class="stage" id="stage" data-active="1">
+        <svg class="scale" viewBox="0 0 640 640" aria-hidden="true">
+          <g class="ring ring-a">
+            <circle cx="320" cy="320" r="304" fill="none" stroke="#1C5A5F" stroke-width="2"/>
+            <circle cx="320" cy="16" r="5" fill="#C6F23A"/>
+            <circle cx="624" cy="320" r="4" fill="#2EC4D6"/>
+            <circle cx="105" cy="535" r="4" fill="#FFFFFF" opacity=".7"/>
+          </g>
+          <g class="ring ring-b">
+            <circle cx="320" cy="320" r="246" fill="none" stroke="#1C5A5F" stroke-width="2" stroke-dasharray="3 9" stroke-linecap="round"/>
+            <circle cx="320" cy="566" r="4" fill="#2EC4D6"/>
+            <circle cx="146" cy="146" r="4" fill="#C6F23A"/>
+          </g>
+          <g transform="translate(140 149) scale(3)">
+            <g class="part p-gate">
+              <line x1="60" y1="26" x2="60" y2="100" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+              <line x1="40" y1="104" x2="80" y2="104" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+            </g>
+            <g class="beam">
+              <line class="part p-gate" x1="18" y1="40" x2="102" y2="40" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+              <g class="pan pan-l part p-small">
+                <line x1="18" y1="40" x2="18" y2="60" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+                <path d="M3 60 A15 15 0 0 0 33 60 Z" fill="#C6F23A"/>
+              </g>
+              <g class="pan pan-r part p-large">
+                <line x1="102" y1="40" x2="102" y2="60" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+                <path d="M87 60 A15 15 0 0 0 117 60 Z" fill="#2EC4D6"/>
+              </g>
+            </g>
+            <g class="part p-request">
+              <path class="diamond" d="M60 6 L70 16 L60 26 L50 16 Z" fill="#C6F23A"/>
+            </g>
+          </g>
+        </svg>
+        <button class="pt pt-1" type="button" data-p="1" aria-label="Step 1, Arabic request. Show explanation."><i>1</i><span>Arabic request</span></button>
+        <button class="pt pt-2 lime" type="button" data-p="2" aria-label="Step 2, Small model answers first. Show explanation and tilt the scale toward the small model."><i>2</i><span>Small model answers first</span></button>
+        <button class="pt pt-3" type="button" data-p="3" aria-label="Step 3, Confidence is weighed. Show explanation."><i>3</i><span>Confidence is weighed</span></button>
+        <button class="pt pt-4 cyan" type="button" data-p="4" aria-label="Step 4, Large model only if needed. Show explanation and tilt the scale toward the large model."><i>4</i><span>Large model only if needed</span></button>
+      </div>
+      <div class="scale-card" id="scale-card" aria-live="polite"><strong></strong><p></p></div>
+    </div>
+  </div>
+</section>
+
+<section class="s s-problem">
+  <div class="wrap">
+    <span class="label">Scenario</span>
+    <h2>One million requests. One model?</h2>
+    <div class="problem-grid">
+      <div class="pcard">
+        <h3>Always Large</h3>
+        <p>Higher quality baseline</p>
+        <p>Premium compute on every request</p>
+      </div>
+      <div class="pcard">
+        <h3>Always Small</h3>
+        <p>Lower cost</p>
+        <p>Higher error risk</p>
+      </div>
+      <div class="pcard best">
+        <h3>MIZAN</h3>
+        <p>Starts small</p>
+        <p>Escalates with evidence</p>
+      </div>
+    </div>
+    <p class="statement">Saudi Arabia is building Arabic AI across infrastructure, models, and applications. At that scale, efficiency cannot be an afterthought.</p>
+  </div>
+</section>
+
+<section class="s s-route">
+  <div class="wrap">
+    <span class="label">Routing</span>
+    <h2>Every request starts small. Evidence decides the rest.</h2>
+    <svg class="route route-wide" viewBox="0 0 1160 320" role="img" aria-label="An Arabic task goes to the economical model and then the confidence gate. High confidence returns the answer. Low confidence or invalid output goes to the stronger model, which returns the answer.">
+      <path class="rl" d="M180 160 H240"/><path class="fl" d="M180 160 H240"/>
+      <path class="rl" d="M440 160 H500"/><path class="fl" d="M440 160 H500"/>
+      <path class="rl lime" d="M690 160 C740 160 740 66 790 66 H930"/><path class="fl lime" d="M690 160 C740 160 740 66 790 66 H930"/>
+      <path class="rl amber" d="M690 160 C740 160 740 254 790 254"/><path class="fl amber" d="M690 160 C740 160 740 254 790 254"/>
+      <path class="rl cyan" d="M960 254 H1000"/><path class="fl cyan" d="M960 254 H1000"/>
+      <text class="bl lime" x="850" y="50" text-anchor="middle">Confidence high</text>
+      <text class="bl amber" x="680" y="292" text-anchor="middle">Confidence low or invalid</text>
+      <g class="node"><rect x="10" y="124" width="170" height="72" rx="14"/><text x="95" y="166" text-anchor="middle">Arabic task</text></g>
+      <g class="node nlime"><rect x="240" y="124" width="200" height="72" rx="14"/><text x="340" y="166" text-anchor="middle">Economical model</text></g>
+      <g class="node gate"><rect x="500" y="124" width="190" height="72" rx="36"/><text x="595" y="166" text-anchor="middle">Confidence gate</text></g>
+      <g class="node end nlime"><rect x="930" y="30" width="190" height="72" rx="14"/><text x="1025" y="72" text-anchor="middle">Return answer</text></g>
+      <g class="node ncyan"><rect x="790" y="218" width="170" height="72" rx="14"/><text x="875" y="260" text-anchor="middle">Stronger model</text></g>
+      <g class="node end ncyan"><rect x="1000" y="218" width="150" height="72" rx="14"/><text x="1075" y="260" text-anchor="middle">Return answer</text></g>
+    </svg>
+    <svg class="route route-tall" viewBox="0 0 360 620" role="img" aria-label="An Arabic task goes to the economical model and then the confidence gate. High confidence returns the answer. Low confidence or invalid output goes to the stronger model, which returns the answer.">
+      <path class="rl" d="M180 58 V90"/><path class="fl" d="M180 58 V90"/>
+      <path class="rl" d="M180 148 V180"/><path class="fl" d="M180 148 V180"/>
+      <path class="rl lime" d="M130 238 C90 270 90 300 90 340"/><path class="fl lime" d="M130 238 C90 270 90 300 90 340"/>
+      <path class="rl amber" d="M230 238 C270 270 270 300 270 340"/><path class="fl amber" d="M230 238 C270 270 270 300 270 340"/>
+      <path class="rl cyan" d="M270 398 V500"/><path class="fl cyan" d="M270 398 V500"/>
+      <text class="bl lime" x="44" y="285" text-anchor="middle"><tspan x="44">Confidence</tspan><tspan x="44" dy="18">high</tspan></text>
+      <text class="bl amber" x="300" y="275" text-anchor="middle"><tspan x="300">Low or</tspan><tspan x="300" dy="18">invalid</tspan></text>
+      <g class="node"><rect x="80" y="2" width="200" height="56" rx="12"/><text x="180" y="36" text-anchor="middle">Arabic task</text></g>
+      <g class="node nlime"><rect x="70" y="92" width="220" height="56" rx="12"/><text x="180" y="126" text-anchor="middle">Economical model</text></g>
+      <g class="node gate"><rect x="80" y="182" width="200" height="56" rx="28"/><text x="180" y="216" text-anchor="middle">Confidence gate</text></g>
+      <g class="node end nlime"><rect x="4" y="342" width="160" height="56" rx="12"/><text x="84" y="376" text-anchor="middle">Return answer</text></g>
+      <g class="node ncyan"><rect x="186" y="342" width="170" height="56" rx="12"/><text x="271" y="376" text-anchor="middle">Stronger model</text></g>
+      <g class="node end ncyan"><rect x="186" y="502" width="170" height="56" rx="12"/><text x="271" y="536" text-anchor="middle">Return answer</text></g>
+    </svg>
+  </div>
+</section>
+
+<section class="s s-demo" id="demo">
+  <div class="wrap">
+    <span class="label">Demo</span>
+    <h2>Two real requests from the <span class="nb">held-out</span> run</h2>
+    <div class="seg" role="tablist" aria-label="Choose an example">
+      <button class="seg-btn" type="button" role="tab" id="tab-high" aria-selected="true" aria-controls="panel-high"><span class="dot lime"></span><strong>High-confidence example</strong><span>The economical model keeps the answer</span></button>
+      <button class="seg-btn" type="button" role="tab" id="tab-low" aria-selected="false" aria-controls="panel-low" tabindex="-1"><span class="dot amber"></span><strong>Lower-confidence example</strong><span>The request goes to the stronger model</span></button>
+    </div>
+    <div class="demo-panel" role="tabpanel" id="panel-high" aria-labelledby="tab-high">{{demo_high}}</div>
+    <div class="demo-panel" role="tabpanel" id="panel-low" aria-labelledby="tab-low" hidden>{{demo_low}}</div>
+    <p class="fine">Questions from ArabicMMLU (Koto et al., Findings of ACL 2024), non-commercial license. Full attribution is in the technical evidence. <a href="#try" data-go="try">Try your own question</a></p>
+
+    <details class="tech" id="technical">
+      <summary><span>View technical evidence</span><span class="hint">Open</span></summary>
+      <div class="tech-body">
+        <div class="tabs" role="tablist" aria-label="Technical evidence">
+          <button type="button" role="tab" id="t-conf" aria-selected="true" aria-controls="p-conf">Confidence</button>
+          <button type="button" role="tab" id="t-cost" aria-selected="false" aria-controls="p-cost" tabindex="-1">Tokens &amp; Cost</button>
+          <button type="button" role="tab" id="t-models" aria-selected="false" aria-controls="p-models" tabindex="-1">Models</button>
+          <button type="button" role="tab" id="t-repro" aria-selected="false" aria-controls="p-repro" tabindex="-1">Reproducibility</button>
+        </div>
+        <div class="tab-panel" role="tabpanel" id="p-conf" aria-labelledby="t-conf">{{tech_confidence}}</div>
+        <div class="tab-panel" role="tabpanel" id="p-cost" aria-labelledby="t-cost" hidden>{{tech_cost}}</div>
+        <div class="tab-panel" role="tabpanel" id="p-models" aria-labelledby="t-models" hidden>{{tech_models}}</div>
+        <div class="tab-panel" role="tabpanel" id="p-repro" aria-labelledby="t-repro" hidden>{{tech_repro}}</div>
+      </div>
+    </details>
+  </div>
+</section>

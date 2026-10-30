@@ -1,11 +1,14 @@
 """Offline tests for the story, the demo routing and the app. No test makes a network call."""
+import copy
+import json
 import math
+import re
 import sys
 
 import pytest
 from conftest import fake_response, tok
 
-from mizan import client, demo as D, story as S
+from mizan import client, demo as D, page as P, story as S
 from mizan.config import ARTIFACTS_DIR, ROOT, experiment, prices
 from mizan.parsing import parse_response
 
@@ -69,7 +72,8 @@ def test_readme_is_generated_from_the_results(res):
 
 
 def test_public_text_avoids_forbidden_words():
-    for path in (ROOT / "README.md", ROOT / "app" / "streamlit_app.py", ROOT / "src" / "mizan" / "story.py", ROOT / "src" / "mizan" / "demo.py"):
+    web = [f for f in (ROOT / "app" / "web").iterdir() if f.is_file()]
+    for path in [ROOT / "README.md", ROOT / "app" / "streamlit_app.py", ROOT / "src" / "mizan" / "story.py", ROOT / "src" / "mizan" / "demo.py", ROOT / "src" / "mizan" / "page.py", *web]:
         text = path.read_text(encoding="utf-8").lower()
         text = "\n".join(line for line in text.splitlines() if not line.startswith("forbidden ="))
         for word in S.FORBIDDEN:
@@ -221,54 +225,262 @@ def test_live_calls_do_not_touch_the_experiment_ledger(monkeypatch, isolated_led
     assert (ARTIFACTS_DIR / "cost_ledger.jsonl").read_bytes() == before
 
 
+# ---------------------------------------------------------------- page content, no Streamlit
+
+
+@pytest.fixture
+def examples():
+    return S.load_json(S.EXAMPLES) if S.EXAMPLES.exists() else None
+
+
+def visible(document: str, drop_technical: bool = False) -> str:
+    """The document's markup without scripts and styles, and optionally without the technical section."""
+    text = re.sub(r"<(script|style)\b.*?</\1>", "", document, flags=re.S)
+    return re.sub(r'<details class="tech".*?</details>\s*</div>\s*</section>', "", text, flags=re.S) if drop_technical else text
+
+
+def script_data(document: str) -> dict:
+    return json.loads(re.search(r"window\.MIZAN=(.*?);</script>", document, re.S).group(1).replace("<\\/", "</"))
+
+
+def test_templates_hold_no_typed_results():
+    for name in ("top.html", "bottom.html"):
+        text = (P.WEB / name).read_text(encoding="utf-8")
+        text = re.sub(r"\{\{\w+\}\}%?", "", text)
+        assert not re.findall(r"\d+(?:\.\d+)?\s*%", text), name
+        assert "$" not in text, name
+
+
+def test_every_template_token_has_a_value(res, examples):
+    assert "{{" not in visible(P.build_top(res, examples)) and "{{" not in visible(P.build_bottom(res, S.load_json(S.PER_ITEM), examples))
+    with pytest.raises(KeyError, match="nope"):
+        P.fill("{{nope}}", {})
+
+
+def test_page_values_come_from_the_results_file(res, examples):
+    per = S.load_json(S.PER_ITEM)
+    top, bottom = P.build_top(res, examples), P.build_bottom(res, per, examples)
+    for phrase in ("66%", "LOWER MEASURED INFERENCE COST", "+5.4 pts vs always-small", "40% fewer accepted errors", "500 held-out questions",
+                   "79.0% MIZAN accuracy vs 82.6% for always gpt-4.1.", "+2.6 to +8.4 points", "40.08%"):
+        assert phrase in visible(top), phrase
+    for phrase in ("62.44% to 70.48%", "15.82%", "26.40%", "0.821", "Preregistered robustness check passed", "74.6%", "25.4%", "Projected from measured held-out routing rates."):
+        assert phrase in visible(bottom), phrase
+    changed = copy.deepcopy(res)
+    changed["original"]["mechanism"]["coverage"] = 0.5
+    assert "50.0% never needed it" in P.build_top(changed, examples)
+    assert "50.0%" in visible(P.build_bottom(changed, per, examples))
+
+
+def test_scale_cards_have_the_measured_share(res):
+    cards = P.scale_cards(res)
+    assert [c["title"] for c in cards] == ["Arabic request", "Small model answers first", "Confidence is weighed", "Large model only if needed"]
+    assert cards[3]["text"] == "Only uncertain cases reach the stronger model. On our held-out test, 74.6% never needed it."
+
+
+def test_forty_percent_detail_does_not_invent_an_interval(res):
+    text = P.metric_details(res)["detail_errors"]
+    assert "records no 95% CI" in text and "directional, not conclusive" in text
+
+
+def test_dollars_stay_inside_the_technical_section(res, examples):
+    per = S.load_json(S.PER_ITEM)
+    top, bottom = P.build_top(res, examples), P.build_bottom(res, per, examples)
+    assert "$" in visible(top)
+    assert "$" not in visible(top, drop_technical=True)
+    assert "$" not in visible(bottom)
+    assert "$" not in json.dumps(script_data(bottom)["replay"])
+
+
+def test_raw_values_only_in_raw_diagnostics(res, examples):
+    conf = P.tech_confidence(res, examples)
+    before, raw = conf.split('<details class="raw">')
+    assert ">6.25<" in before and "6.2499" not in before and "e-08" not in before
+    assert "6.249999994711611" in raw and ("e-08" in raw or not examples)
+
+
+def test_replay_data_rebuilds_the_results_from_every_item(res):
+    r = P.replay_data(res, S.load_json(S.PER_ITEM))
+    o = res["original"]
+    assert len(r["esc"]) == o["n"] == 500
+    assert sum(r["esc"]) == o["mizan"]["escalated_items"]
+    assert sum(r["ok"]) / 500 == o["mizan"]["accuracy"]
+    assert math.isclose(1 - sum(r["cost"]) / sum(r["always"]), o["mizan"]["saving_vs_top"], rel_tol=1e-9)
+    assert math.isclose(sum(r["always"]), 1.0)
+    assert r["final"] == {"processed": "500", "saving": "66.45%", "accuracy": "79.0%", "handled": "74.6%", "cost": "33.55%"}
+
+
+def test_replay_refuses_a_table_that_disagrees_with_the_results(res):
+    wrong = copy.deepcopy(res)
+    wrong["original"]["mizan"]["escalated_items"] += 1
+    with pytest.raises(ValueError, match="does not reproduce"):
+        P.replay_data(wrong, S.load_json(S.PER_ITEM))
+
+
+def test_chart_uses_relative_cost_and_labels_each_interval(res):
+    c = P.chart_data(res)
+    by = {p["key"]: p for p in c["points"]}
+    assert set(by) == {"gpt-4o-mini", "gpt-4.1-mini", "gpt-4.1", "random", "mizan"}
+    assert by["gpt-4.1"]["x"] == 100
+    assert math.isclose(by["mizan"]["x"], (1 - res["original"]["mizan"]["saving_vs_top"]) * 100)
+    assert by["mizan"]["low"] == res["original"]["mizan"]["accuracy_ci95"][0]
+    assert "95% CI" in by["mizan"]["tip"] and "Handled economically 74.6%" in by["mizan"]["tip"] and "Relative cost 33.55" in by["mizan"]["tip"]
+    assert "95% seed range" in by["random"]["tip"]
+    assert (c["cost_callout"], c["acc_callout"]) == ("66% lower cost", "+5.4 accuracy points")
+    assert all("$" not in p["tip"] for p in c["points"])
+
+
+def test_robustness_order_is_the_recorded_shuffle(res, examples):
+    r = P.robustness_data(res, examples)
+    assert (r["original"], r["shuffled"]) == ("0.821", "0.825")
+    if examples:
+        assert sorted(r["shuffled_positions"]) == list(range(len(r["options"])))
+        assert r["shuffled_positions"] != list(range(len(r["options"])))
+
+
+@pytest.mark.skipif(not S.EXAMPLES.exists(), reason="demo_examples.json is built locally")
+def test_demo_cards_use_the_recorded_data(examples):
+    high, low = examples["examples"]["high_confidence"], examples["examples"]["lower_confidence"]
+    accepted = P.result_card(D.recorded_request(high), high["options"], high["english"]["options"], high["correct_answer"])
+    assert all(x in accepted for x in ("Handled efficiently", "Avoided", "92.5%", "Recorded run"))
+    assert "$" not in accepted
+    escalated = P.result_card(D.recorded_request(low), low["options"], low["english"]["options"], low["correct_answer"])
+    assert all(x in escalated for x in ("Escalated to protect quality", "The model was split between two answers.", "First model answer", "Stronger model answer",
+                                        "corrected the first answer", "savings come from the requests that avoid escalation"))
+    assert "$" not in escalated
+    assert "English translation (machine-assisted)" in P.question_card(high)
+    uncorrected = {**D.recorded_request(low), "corrected": False}
+    assert "did not correct" in P.result_card(uncorrected, low["options"], low["english"]["options"], low["correct_answer"])
+
+
+def test_user_text_is_escaped_in_the_result_card():
+    r = {"source": "live", "decision": D.HANDLED, "margin": 9.0, "small_answer": "A", "large_answer": None, "final_answer": "A", "corrected": False,
+         "cost_usd": 1.0, "always_large_cost_usd": 2.0, "always_large_cost_kind": "estimated"}
+    card = P.result_card(r, ["<img src=x onerror=alert(1)>", "b", "c", "d"])
+    assert "<img" not in card and "&lt;img" in card and "Live call" in card and "no answer key" in card
+
+
+def test_free_input_validation():
+    assert P.validate_free_input("q", ["a", "b", "c", "d", ""]) == ([], ["a", "b", "c", "d"])
+    assert P.validate_free_input(" q ", ["a", "b", "c", "d", "e"]) == ([], ["a", "b", "c", "d", "e"])
+    errors, _ = P.validate_free_input("", ["", "", "", "", ""])
+    assert errors == ["Enter a question.", "Fill in options A, B, C, D."]
+    assert P.validate_free_input("q", ["a", "b", "", "d", ""])[0] == ["Fill in option C."]
+    assert P.validate_free_input("q", ["a", "a", "c", "d", ""])[0] == ["Each option must be different."]
+    assert "under" in P.validate_free_input("q" * (P.MAX_QUESTION_CHARS + 1), ["a", "b", "c", "d", ""])[0][0]
+    assert "under" in P.validate_free_input("q", ["a" * (P.MAX_OPTION_CHARS + 1), "b", "c", "d", ""])[0][0]
+
+
+def test_github_link_is_hidden_unless_a_real_https_url_is_configured(tmp_path, monkeypatch):
+    cfg = tmp_path / "app.yaml"
+    monkeypatch.setattr(P, "APP_CONFIG", cfg)
+    assert P.github_url() == ""  # no file
+    for bad in ('github_url: ""', "github_url: javascript:alert(1)", "github_url: http://example.com/x", 'github_url: "https://x.example/a b"'):
+        cfg.write_text(bad, encoding="utf-8")
+        assert P.github_url() == "", bad
+        assert "View GitHub" not in P.build_header()
+    cfg.write_text("github_url: https://github.com/example/mizan", encoding="utf-8")
+    assert 'href="https://github.com/example/mizan"' in P.build_header()
+    assert "View GitHub" in P.build_header()
+
+
+def test_assets_exist_and_the_cover_is_not_embedded():
+    assert P.LOGO.exists() and (P.ASSETS / "cover-reference.png").exists()
+    assert "plotly.js (basic - minified) v2.35.2" in P.PLOTLY.read_text(encoding="utf-8")[:200]
+    for name in ("top.html", "bottom.html", "page.css", "page.js"):
+        assert "cover-reference" not in (P.WEB / name).read_text(encoding="utf-8")
+    assert "cover-reference" not in (ROOT / "app" / "streamlit_app.py").read_text(encoding="utf-8")
+
+
 # ---------------------------------------------------------------- app, no key and no network
 
 
 def page_text(at) -> str:
-    return "\n".join(el.proto.body for el in at.get("html"))
+    parts = [el.proto.body for el in at.get("html")]
+    parts += [el.proto.srcdoc for el in at.get("iframe")]
+    return "\n".join(parts)
 
 
 @pytest.fixture
 def app(monkeypatch):
     from streamlit.testing.v1 import AppTest
     monkeypatch.setenv("MIZAN_DISABLE_LIVE", "1")
-    monkeypatch.setenv("MIZAN_REPLAY_SECONDS", "0")
     monkeypatch.setattr(client, "chat", lambda *a, **k: pytest.fail("the app called the network"))
     at = AppTest.from_file(str(ROOT / "app" / "streamlit_app.py"), default_timeout=60)
     return at.run()
 
 
-def test_app_renders_every_section_in_order_without_a_key(app, res):
+def test_app_renders_every_section_in_order_without_a_key(app):
     assert not app.exception
-    text = page_text(app)
-    order = ["Built for efficient Arabic AI at scale", "Does every Arabic task need the biggest model?", "66%", "LOWER MEASURED INFERENCE COST",
-             "Tested on 500 held-out Arabic questions not used during development.", "How MIZAN routes", "Arabic application", "Demo",
-             "Replay 100 held-out requests", "Replaying a recorded held-out evaluation run.", "Evidence", "Robustness",
-             "Confidence quality remained stable after the options moved.", "Impact at scale", "approximately 746,000"]
+    bodies = [el.proto.body for el in app.get("html")]
+    frames = [el.proto.srcdoc for el in app.get("iframe")]
+    header = next(b for b in bodies if "<header" in b)
+    free = " ".join(b for b in bodies if "mz-try" in b and "<style" not in b)
+    text = " ".join(visible(part) for part in (header, frames[0], free, frames[1]))
+    order = ["mz-head", "Overview", "How it works", "Built for efficient Arabic AI at scale", "Does every Arabic task need the biggest model?", "66%", "LOWER MEASURED INFERENCE COST",
+             "One million requests. One model?", "Always Large", "Always Small", "Saudi Arabia is building Arabic AI", "Confidence high",
+             "Confidence low or invalid", "Economical model", "Confidence gate", "Stronger model", "High-confidence example", "View technical evidence", "Confidence", "Tokens &amp; Cost", "Models", "Reproducibility",
+             "Try your own question", "Prototype evaluated on Arabic multiple-choice tasks.", "Do not enter sensitive or personal information.",
+             "Recorded evaluation run", "500-question", "The balance MIZAN found", "fewer accepted errors", "Confidence held steady after the options moved", "Preregistered robustness check passed",
+             "What this means at scale", "model selection becomes an infrastructure decision", "Answer economically", "Read confidence", "Escalate uncertainty", "Measure the trade-off",
+             "Not every question needs the biggest model. MIZAN helps find the ones that do.", "MIZAN — Adaptive Arabic AI Routing", "Built solo by Abdulaziz Alothman", "HUMAIN Hackathon — Challenge 2", "Back to top"]
     at = -1
     for phrase in order:
         pos = text.find(phrase, at + 1)
         assert pos > at, phrase
         at = pos
     assert "directional, not conclusive" in text and S.SPLIT_SENTENCE in text
-    assert app.expander[-1].label == "Technical details" and not app.expander[-1].proto.expanded
+    assert "100 held-out" not in text and "first 100" not in text
+    assert '<details class="tech" id="technical">' in text  # collapsed: no open attribute
     for word in S.FORBIDDEN:
         assert word not in text.lower()
 
 
+def test_app_hides_the_github_links_with_the_default_config(app):
+    text = page_text(app)
+    assert "View GitHub" not in text and 'class="flink" href="https' not in text
+
+
+def test_app_chart_and_scripts_are_embedded(app):
+    frames = [el.proto.srcdoc for el in app.get("iframe")]
+    assert len(frames) == 2
+    assert "plotly.js (basic - minified)" in frames[1] and "plotly.js (basic - minified)" not in frames[0]
+    assert script_data(frames[0])["scale"] and script_data(frames[1])["replay"]["final"]["saving"] == "66.45%"
+
+
+def test_app_free_input_validates_and_sends_nothing_without_a_key(app):
+    app.button(key="btn_route").click().run()
+    assert not app.exception
+    assert "Enter a question." in page_text(app) and "Fill in options A, B, C, D." in page_text(app)
+    app.text_area(key="try_q").set_value("q")
+    for key, value in zip("abcd", "wxyz"):
+        app.text_input(key=f"try_{key}").set_value(value)
+    app.button(key="btn_route").click().run()
+    assert not app.exception
+    assert "Nothing was sent" in page_text(app)
+
+
 @pytest.mark.skipif(not S.EXAMPLES.exists(), reason="demo_examples.json is built locally")
-def test_app_shows_recorded_examples_with_honest_labels(app):
-    assert "Recorded run" in page_text(app) and "Handled efficiently" in page_text(app)
-    app.button(key="btn_low").click().run()
+def test_app_load_example_fills_the_form(app):
+    app.button(key="btn_load").click().run()
     assert not app.exception
-    text = page_text(app)
-    assert "Escalated to protect quality" in text and "Example from the held-out set" in text and "Recorded run" in text
-    assert "so it corrected the answer" in text
+    high = S.load_json(S.EXAMPLES)["examples"]["high_confidence"]
+    assert app.text_area(key="try_q").value == high["question"]
+    assert [app.text_input(key=f"try_{k}").value for k in "abcd"] == high["options"]
+    assert app.text_input(key="try_e").value == ""
 
 
-def test_app_replay_ends_on_the_recorded_totals(app):
-    t = S.replay_totals(S.replay_rows(S.load_json(S.PER_ITEM)))
-    app.button(key="btn_replay").click().run()
-    assert not app.exception
-    text = page_text(app)
-    assert f">{t['handled']}<" in text and f">{t['escalated']}<" in text and f"{t['accuracy'] * 100:.1f}%" in text
+def test_app_live_route_only_on_button_press_with_fake_network(monkeypatch, isolated_ledger):
+    from streamlit.testing.v1 import AppTest
+    monkeypatch.delenv("MIZAN_DISABLE_LIVE", raising=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key-not-real")
+    fake = FakeChat(confident(), unsure())
+    monkeypatch.setattr(client, "chat", fake)
+    at = AppTest.from_file(str(ROOT / "app" / "streamlit_app.py"), default_timeout=60).run()
+    assert not at.exception and fake.calls == []  # opening the page never calls a model
+    at.text_area(key="try_q").set_value("q")
+    for key, value in zip("abcd", "wxyz"):
+        at.text_input(key=f"try_{key}").set_value(value)
+    at.button(key="btn_route").click().run()
+    assert not at.exception and len(fake.calls) == 1
+    text = page_text(at)
+    assert "Handled efficiently" in text and "Live call" in text and "no answer key" in text
