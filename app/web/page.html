@@ -161,10 +161,10 @@
         <div class="x-body" id="mx-points"><div>{{detail_points}}</div></div>
       </div>
       <div class="mcard">
-        <button class="x-toggle" type="button" aria-expanded="false" aria-controls="mx-errors">
-          <span class="m-num">{{card_errors}}</span><span class="m-lab">fewer accepted errors vs matched random acceptance</span><span class="hint">Details</span>
+        <button class="x-toggle" type="button" aria-expanded="false" aria-controls="mx-large">
+          <span class="m-num">Within {{card_large}}</span><span class="m-lab">points of always-large</span><span class="hint">Details</span>
         </button>
-        <div class="x-body" id="mx-errors"><div>{{detail_errors}}</div></div>
+        <div class="x-body" id="mx-large"><div>{{detail_large}}</div></div>
       </div>
     </div>
     <div class="chart-card">
@@ -251,8 +251,7 @@
   <div class="wrap">
     <span class="label">Recorded evaluation run</span>
     <h2>Replay the {{replay_n}}-question <span class="nb">held-out</span> evaluation</h2>
-    <div class="replay-grid">
-      <div class="replay-main">
+    <div class="replay-main">
         <div class="replay-kpis">
           <div class="kpi lead"><span class="kpi-v lime" id="r-saving"></span><span class="kpi-k">Measured saving vs always gpt-4.1</span></div>
           <div class="kpi"><span class="kpi-v" id="r-accuracy"></span><span class="kpi-k">Accuracy</span></div>
@@ -265,11 +264,6 @@
           <button class="btn primary small" type="button" id="r-play">Replay</button>
         </div>
       </div>
-      <div class="replay-feed">
-        <div class="tag">Last routed requests</div>
-        <ul id="r-feed" aria-live="off"></ul>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -289,19 +283,6 @@
         <div class="tab-panel" role="tabpanel" id="p-models" aria-labelledby="t-models" hidden>{{tech_models}}</div>
         <div class="tab-panel" role="tabpanel" id="p-repro" aria-labelledby="t-repro" hidden>{{tech_repro}}</div>
     </div>
-  </div>
-</section>
-
-<section class="s s-how" id="how">
-  <div class="wrap">
-    <span class="label">How it works</span>
-    <h2>Four steps, every request</h2>
-    <ol class="steps">
-      <li><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 34 A16 16 0 0 0 40 34 Z" fill="#C6F23A"/><line x1="24" y1="8" x2="24" y2="24" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/></svg><h3>Answer economically</h3><p>The economical model answers every request first.</p></li>
-      <li><svg viewBox="0 0 48 48" aria-hidden="true"><line x1="8" y1="38" x2="8" y2="22" stroke="#C6F23A" stroke-width="6" stroke-linecap="round"/><line x1="24" y1="38" x2="24" y2="10" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/><line x1="40" y1="38" x2="40" y2="28" stroke="#2EC4D6" stroke-width="6" stroke-linecap="round"/></svg><h3>Read confidence</h3><p>The answer itself carries the signal, so no extra call is needed.</p></li>
-      <li><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 38 H24 V12" fill="none" stroke="#F5A524" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 18 L24 10 L32 18" fill="none" stroke="#2EC4D6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><h3>Escalate uncertainty</h3><p>A narrow gap or invalid output goes to the stronger model.</p></li>
-      <li><svg viewBox="0 0 48 48" aria-hidden="true"><line x1="6" y1="16" x2="42" y2="16" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/><line x1="24" y1="8" x2="24" y2="40" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/><path d="M4 26 A7 7 0 0 0 18 26 Z" fill="#C6F23A"/><path d="M30 26 A7 7 0 0 0 44 26 Z" fill="#2EC4D6"/></svg><h3>Measure the trade-off</h3><p>Cost and accuracy are reported together on held-out questions.</p></li>
-    </ol>
   </div>
 </section>
 

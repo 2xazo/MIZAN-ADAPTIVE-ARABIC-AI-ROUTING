@@ -182,16 +182,7 @@
     var BATCH = 10, STEP_MS = 200;
     var timer = null;
     var pct = function (x, places) { return (x * 100).toFixed(places) + "%"; };
-    var bar = $("#r-progress"), wrap = $("#r-progress-wrap"), feed = $("#r-feed");
-    var drawFeed = function (upto) {
-      var html = "";
-      for (var k = upto - 1; k >= Math.max(0, upto - 5); k--) {
-        html += R.esc[k]
-          ? '<li class="x"><span>Request ' + (k + 1) + "</span><b>Escalated</b></li>"
-          : '<li class="h"><span>Request ' + (k + 1) + "</span><b>Handled efficiently</b></li>";
-      }
-      feed.innerHTML = html;
-    };
+    var bar = $("#r-progress"), wrap = $("#r-progress-wrap");
     var show = function (v, upto) {
       $("#r-saving").textContent = v.saving;
       $("#r-accuracy").textContent = v.accuracy;
@@ -200,7 +191,6 @@
       $("#r-count").textContent = String(upto);
       bar.style.width = (upto / total * 100) + "%";
       wrap.setAttribute("aria-valuenow", String(upto));
-      drawFeed(upto);
     };
     var showFinal = function () { show(R.final, total); };
     var at = function (upto) {

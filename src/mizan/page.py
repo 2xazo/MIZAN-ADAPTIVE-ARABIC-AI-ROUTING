@@ -215,6 +215,7 @@ def detail(plain: str, how: str, exact: str) -> str:
 
 def metric_details(res: dict) -> dict:
     o = res["original"]
+    behind = abs(o["non_dominance"]["paired"][S.LARGE]["accuracy_diff"]["observed"]) * 100
     z, m = o["mizan"], o["mechanism"]
     small = o["singles"][S.SMALL]
     paired, against_top = o["non_dominance"]["paired"][S.SMALL]["accuracy_diff"], o["non_dominance"]["paired"][S.LARGE]["accuracy_diff"]
@@ -235,6 +236,10 @@ def metric_details(res: dict) -> dict:
             f"MIZAN accepted {accepted} of {o['n']} answers, and {pct(m['selective_risk'])} of those were wrong. Accepting at random at the same rate would keep the model's overall error rate of {pct(m['random_acceptance_risk'])}.",
             f"{pct(S.relative_error_reduction(res))} fewer ({pct(m['selective_risk'])} vs {pct(m['random_acceptance_risk'])}). The results file records no 95% CI for this ratio. "
             f"The related overall accuracy gain over matched random is {pts(d['observed'])} points, 95% CI {ci_pts(d['ci95'])}, which is directional, not conclusive."),
+        "detail_large": detail(
+            f"MIZAN gives up {behind:.1f} accuracy points against sending every request to {S.LARGE}, in exchange for the lower cost.",
+            f"Accuracy on the same {o['n']} questions: {pct(z['accuracy'], 1)} for MIZAN and {pct(o['singles'][S.LARGE]['accuracy'], 1)} for always {S.LARGE}, compared with a paired bootstrap.",
+            f"{behind:.1f} points below. 95% CI {ci_pts(o['non_dominance']['paired'][S.LARGE]['accuracy_diff']['ci95'])}."),
         "detail_n": detail(
             f"The evaluation used {o['n']} Arabic multiple-choice questions that were not used during development.",
             f"{e(S.SPLIT_SENTENCE)} The threshold and the prompt were frozen before the run.",
@@ -421,7 +426,7 @@ def tokens_for(res: dict, examples: dict | None) -> dict:
         "metric_value": e(h["metric_value"]), "metric_label": e(h["metric_label"]),
         "chip_points": f"{paired * 100:+.1f} pts vs always-small", "chip_errors": f"{reduction * 100:.0f}% fewer accepted errors", "chip_n": f"{o['n']} held-out questions",
         "tradeoff": f"{pct(z['accuracy'], 1)} MIZAN accuracy vs {pct(o['singles'][S.LARGE]['accuracy'], 1)} for always {S.LARGE}.",
-        "card_saving": f"{z['saving_vs_top'] * 100:.0f}%", "card_points": f"{paired * 100:+.1f}", "card_errors": f"{reduction * 100:.0f}%",
+        "card_saving": f"{z['saving_vs_top'] * 100:.0f}%", "card_points": f"{paired * 100:+.1f}", "card_large": f"{abs(o['non_dominance']['paired'][S.LARGE]['accuracy_diff']['observed']) * 100:.1f}",
         "errors_big": f"{reduction * 100:.0f}%", "error_mizan": pct(m["selective_risk"]), "error_random": pct(m["random_acceptance_risk"]),
         "error_mizan_w": f"{m['selective_risk'] / m['random_acceptance_risk'] * 100:.2f}",
         "auroc_original": f"{m['auroc']:.3f}", "robust_badge": "Preregistered robustness check passed" if claims else "Preregistered robustness check did not pass",
