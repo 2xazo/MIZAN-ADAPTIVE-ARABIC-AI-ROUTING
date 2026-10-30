@@ -1,0 +1,43 @@
+# MIZAN experiment configuration. Values here are fixed before any paid run.
+
+seed: 42
+
+budget:
+  total_usd: 10.0
+  experiments_usd: 8.0      # hard stop for evaluation runs
+  reserve_usd: 2.0          # demo/emergency, needs coordinator approval
+
+data:
+  dataset: MBZUAI/ArabicMMLU
+  hf_config: All
+  hf_split: test
+  dev_size: 300             # Go/No-Go uses the first `--n` items of dev (default 100)
+  heldout_size: 500
+  stratify_by: [Subject, Level]
+
+call:
+  temperature: 0
+  logprobs: true
+  top_logprobs: 20
+  max_output_tokens: 3      # tune after smoke test; must allow whitespace + letter
+  timeout_s: 60
+  max_retries: 4
+
+prompt:
+  system: >-
+    You answer Arabic multiple-choice questions.
+    Return exactly one uppercase ASCII letter from the available choices. Return no explanation.
+
+# Candidates are tried in order on DEV only. The final pair is chosen by a live probe.
+candidates:
+  small: [gpt-4.1-mini, gpt-4o-mini, gpt-5.4-nano, gpt-5.6-luna]
+  large: [gpt-4.1]
+
+go_criteria:
+  min_small_accuracy: 0.50
+  min_gap_points: 5.0
+  min_auroc: 0.70
+  max_loss_points: 2.0
+  min_saving: 0.40
+  borderline_auroc: [0.62, 0.75]
+  borderline_gap_points: [3.0, 5.0]

@@ -1,0 +1,15 @@
+# USD per 1,000,000 tokens. MUST be verified against the official page before any paid run.
+# Paid scripts refuse to run while `verified: false`.
+source_url: https://platform.openai.com/docs/pricing
+currency: USD
+unit: per_1M_tokens
+verified: false
+verified_on: null          # set to YYYY-MM-DD when you check the page
+
+models:
+  # Placeholder values (last known list prices). Replace with the official numbers.
+  gpt-4.1-mini: {input: 0.40, output: 1.60}
+  gpt-4o-mini:  {input: 0.15, output: 0.60}
+  gpt-4.1:      {input: 2.00, output: 8.00}
+  gpt-5.4-nano: {input: null, output: null}
+  gpt-5.6-luna: {input: null, output: null}

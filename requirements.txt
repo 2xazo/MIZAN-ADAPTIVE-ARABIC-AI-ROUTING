@@ -1,0 +1,8 @@
+# Python 3.11+
+# Core (no OpenAI SDK needed: the client uses plain HTTPS so request params are fully explicit)
+numpy==2.5.3
+PyYAML==6.0.3
+python-dotenv==1.2.3
+pytest==9.1.1
+# Only needed by scripts/prepare_data.py to download ArabicMMLU from Hugging Face
+datasets==3.6.0
