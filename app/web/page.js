@@ -49,6 +49,7 @@
     }
     var target = locate(id);
     if (!target) return;
+    if (target.el.tagName === "DETAILS") target.el.open = true;
     if (!scroller) { target.el.scrollIntoView({ behavior: behavior }); return; }
     var head = host.querySelector(".mz-head");
     var offset = head ? head.getBoundingClientRect().height : 0;
@@ -69,6 +70,9 @@
         if (a) { ev.preventDefault(); host.__mizanGo(a.getAttribute("href").slice(1)); }
       });
     }
+    /* A link that arrives with a section in the URL. */
+    var arrival = window.parent.location.hash.slice(1);
+    if (arrival && document.getElementById(arrival)) window.addEventListener("load", function () { setTimeout(function () { go(arrival); }, 300); });
   }
 
   /* Metric cards and chips: click to expand in place, click again to collapse. */

@@ -4,7 +4,9 @@
   --lime: #C6F23A; --cyan: #2EC4D6; --amber: #F5A524; --text: #FFFFFF; --muted: #A9C4C6;
   --head: 'Unbounded', 'Inter', sans-serif; --body: 'Inter', 'Noto Sans Arabic', 'Segoe UI', sans-serif;
   --arabic: 'Noto Sans Arabic', 'Segoe UI', sans-serif;
+  --mz-head: 68px;
 }
+@media (max-width: 820px) { :root { --mz-head: 96px; } }
 .ar { font-family: var(--arabic); direction: rtl; text-align: right; line-height: 1.8; }
 .tag { color: var(--muted); font-size: .78rem; font-weight: 600; letter-spacing: .02em; margin: 0 0 .5rem; }
 .letter { display: inline-grid; place-items: center; width: 1.6em; height: 1.6em; flex: none; border-radius: 6px; background: rgba(255,255,255,.1); font: 600 .82rem var(--body); direction: ltr; }

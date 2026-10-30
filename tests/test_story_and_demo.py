@@ -451,7 +451,7 @@ def test_app_renders_every_section_in_order_without_a_key(app):
     header = next(b for b in bodies if "<header" in b)
     free = " ".join(b for b in bodies if "mz-try" in b and "<style" not in b)
     text = " ".join(visible(part) for part in (header, frames[0], free, frames[1]))
-    order = ["mz-head", "Overview", "How it works", "Built for efficient Arabic AI at scale", "Does every Arabic task need the biggest model?", "66%", "LOWER MEASURED INFERENCE COST",
+    order = ["mz-head", "Overview", "Technical details", "Built for efficient Arabic AI at scale", "Does every Arabic task need the biggest model?", "66%", "LOWER MEASURED INFERENCE COST",
              "One million requests. One model?", "Always Large", "Always Small", "Saudi Arabia is building Arabic AI", "Confidence high",
              "Confidence low or invalid", "Economical model", "Confidence gate", "Stronger model", "High-confidence example", "View technical evidence", "Confidence", "Tokens &amp; Cost", "Models", "Reproducibility",
              "Try your own question", "Prototype evaluated on Arabic multiple-choice tasks.", "Do not enter sensitive or personal information.",

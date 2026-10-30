@@ -3,6 +3,7 @@
 html, body { margin: 0; padding: 0; background: var(--bg); overflow: hidden; }
 body { color: var(--text); font: 400 16px/1.6 var(--body); -webkit-font-smoothing: antialiased; }
 #page { display: flow-root; }
+section[id], footer[id], details[id] { scroll-margin-top: var(--mz-head); }
 h1, h2, h3, .m-num, .hero-num, .errors-num, .auroc, .kpi-v, .i-v { font-family: var(--head); margin: 0; }
 p { margin: 0; }
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }

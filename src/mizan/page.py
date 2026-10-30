@@ -28,6 +28,8 @@ MAX_QUESTION_CHARS = 2000
 MAX_OPTION_CHARS = 500
 FONTS = "https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600&display=swap"
 TOKEN = re.compile(r"\{\{(\w+)\}\}")
+NAV = (("overview", "Overview"), ("problem", "Problem"), ("demo", "Demo"), ("results", "Results"), ("robustness", "Robustness"),
+       ("impact", "Impact"), ("replay", "Replay"), ("technical", "Technical details"))
 LOGO_MARK = ('<svg class="mark" viewBox="0 0 120 120" role="img" aria-label="MIZAN logo">'
              '<path d="M60 8 L68 16 L60 24 L52 16 Z" fill="#C6F23A"/>'
              '<line x1="60" y1="26" x2="60" y2="100" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>'
@@ -457,7 +459,7 @@ def build_bottom(res: dict, per_item: dict, examples: dict | None) -> str:
 def build_header() -> str:
     url = github_url()
     button = f'<a class="mz-gh" href="{e(url)}" target="_blank" rel="noopener">View GitHub</a>' if url else ""
-    links = "".join(f'<a href="#{target}">{label}</a>' for target, label in (("overview", "Overview"), ("demo", "Demo"), ("results", "Results"), ("robustness", "Robustness"), ("how", "How it works")))
+    links = "".join(f'<a href="#{target}">{label}</a>' for target, label in NAV)
     return f'<header class="mz-head"><a class="mz-brand" href="#top" aria-label="MIZAN, back to top"><span class="mark"></span><span>MIZAN</span></a><nav aria-label="Page sections">{links}</nav>{button}</header>'
 
 
