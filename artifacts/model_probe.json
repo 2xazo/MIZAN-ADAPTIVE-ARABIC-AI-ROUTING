@@ -1,0 +1,149 @@
+{
+ "probed_at": "2026-10-30T15:52:20+0300",
+ "models": {
+  "gpt-4.1-mini": {
+   "listed_in_account": true,
+   "shutdown_date": "2027-01-14",
+   "ok": true,
+   "overrides": {},
+   "latency_s": 2.33479460000126,
+   "model_returned": "gpt-4.1-mini-2025-04-14",
+   "content": "B",
+   "finish_reason": "stop",
+   "logprobs_returned": true,
+   "top_logprobs_returned": 20,
+   "output_tokens_seen": [
+    "B"
+   ],
+   "usage": {
+    "input": 67,
+    "output": 1,
+    "reasoning": 0
+   },
+   "parsed_valid": true,
+   "parsed_letter": "B",
+   "normalized_complete": true,
+   "rejected_attempts": []
+  },
+  "gpt-4o-mini": {
+   "listed_in_account": true,
+   "shutdown_date": "2027-01-14",
+   "ok": true,
+   "overrides": {},
+   "latency_s": 2.357413699999597,
+   "model_returned": "gpt-4o-mini-2024-07-18",
+   "content": "B",
+   "finish_reason": "stop",
+   "logprobs_returned": true,
+   "top_logprobs_returned": 20,
+   "output_tokens_seen": [
+    "B"
+   ],
+   "usage": {
+    "input": 67,
+    "output": 1,
+    "reasoning": 0
+   },
+   "parsed_valid": true,
+   "parsed_letter": "B",
+   "normalized_complete": true,
+   "rejected_attempts": []
+  },
+  "gpt-5.4-nano": {
+   "listed_in_account": true,
+   "shutdown_date": "2027-04-01",
+   "ok": false,
+   "rejected_attempts": [
+    {
+     "overrides": {},
+     "status": 400,
+     "error": "{\n  \"error\": {\n    \"message\": \"Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": \"max_tokens\",\n    \"code\": \"unsupported_parameter\"\n  }\n}"
+    },
+    {
+     "overrides": {
+      "max_completion_tokens": 3
+     },
+     "status": 400,
+     "error": "{\n  \"error\": {\n    \"message\": \"Invalid value for 'top_logprobs': must be less than or equal to 5.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": \"top_logprobs\",\n    \"code\": null\n  }\n}"
+    },
+    {
+     "overrides": {
+      "max_completion_tokens": 3,
+      "reasoning_effort": "none"
+     },
+     "status": 400,
+     "error": "{\n  \"error\": {\n    \"message\": \"Invalid value for 'top_logprobs': must be less than or equal to 5.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": \"top_logprobs\",\n    \"code\": null\n  }\n}"
+    },
+    {
+     "overrides": {
+      "max_completion_tokens": 3,
+      "reasoning_effort": "none",
+      "temperature": null
+     },
+     "status": 400,
+     "error": "{\n  \"error\": {\n    \"message\": \"Invalid value for 'top_logprobs': must be less than or equal to 5.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": \"top_logprobs\",\n    \"code\": null\n  }\n}"
+    }
+   ]
+  },
+  "gpt-5.6-luna": {
+   "listed_in_account": true,
+   "shutdown_date": null,
+   "ok": false,
+   "rejected_attempts": [
+    {
+     "overrides": {},
+     "status": 400,
+     "error": "{\n  \"error\": {\n    \"message\": \"Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": \"max_tokens\",\n    \"code\": \"unsupported_parameter\"\n  }\n}"
+    },
+    {
+     "overrides": {
+      "max_completion_tokens": 3
+     },
+     "status": 400,
+     "error": "{\n  \"error\": {\n    \"message\": \"Unsupported value: 'temperature' does not support 0 with this model. Only the default (1) value is supported.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": \"temperature\",\n    \"code\": \"unsupported_value\"\n  }\n}"
+    },
+    {
+     "overrides": {
+      "max_completion_tokens": 3,
+      "reasoning_effort": "none"
+     },
+     "status": 400,
+     "error": "{\n  \"error\": {\n    \"message\": \"Invalid value for 'top_logprobs': must be less than or equal to 5.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": \"top_logprobs\",\n    \"code\": null\n  }\n}"
+    },
+    {
+     "overrides": {
+      "max_completion_tokens": 3,
+      "reasoning_effort": "none",
+      "temperature": null
+     },
+     "status": 400,
+     "error": "{\n  \"error\": {\n    \"message\": \"Invalid value for 'top_logprobs': must be less than or equal to 5.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": \"top_logprobs\",\n    \"code\": null\n  }\n}"
+    }
+   ]
+  },
+  "gpt-4.1": {
+   "listed_in_account": true,
+   "shutdown_date": "2027-01-14",
+   "ok": true,
+   "overrides": {},
+   "latency_s": 0.9383178999996744,
+   "model_returned": "gpt-4.1-2025-04-14",
+   "content": "B",
+   "finish_reason": "stop",
+   "logprobs_returned": true,
+   "top_logprobs_returned": 20,
+   "output_tokens_seen": [
+    "B"
+   ],
+   "usage": {
+    "input": 67,
+    "output": 1,
+    "reasoning": 0
+   },
+   "parsed_valid": true,
+   "parsed_letter": "B",
+   "normalized_complete": false,
+   "rejected_attempts": []
+  }
+ }
+}

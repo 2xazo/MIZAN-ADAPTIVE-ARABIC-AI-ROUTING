@@ -86,7 +86,8 @@ def analyze_pair(records: list[dict], small: str, large: str, crit: dict,
         "small_accuracy>=min": small_r["accuracy"] >= crit["min_small_accuracy"],
         "gap_points>=min": gap >= crit["min_gap_points"],
         "auroc>=min": sel_auroc is not None and sel_auroc >= crit["min_auroc"],
-        "mizan_beats_random": bool(miz and rnd and miz["accuracy"] > rnd["accuracy"]),
+        "mizan_beats_random": bool(miz and rnd and miz["escalation_rate"] > 0
+                                   and miz["accuracy"] > rnd["accuracy"] + 1e-9),
         "operating_point_loss<=max_and_saving>=min": bool(
             miz and (large_r["accuracy"] - miz["accuracy"]) * 100 <= crit["max_loss_points"] + 1e-9
             and miz["saving_vs_large"] >= crit["min_saving"]),

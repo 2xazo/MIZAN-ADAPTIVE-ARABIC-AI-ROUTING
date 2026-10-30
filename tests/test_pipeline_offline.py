@@ -19,6 +19,26 @@ def write(cache, model, item, content, entries):
                              "response": fake_response(content, entries)}), encoding="utf-8")
 
 
+def test_zero_escalation_does_not_beat_random(tmp_path):
+    """Same shape as the real Dev result: small 79%, large 80%, so the cheapest allowed point never escalates."""
+    items = []
+    for i in range(100):
+        it = {"id": f"q{i}", "level": "L", "subject": "S", "country": "SA",
+              "options": ["a", "b", "c", "d"], "answer": "A"}
+        items.append(it)
+        small_letter = "A" if i < 79 else "B"
+        rest = 0.05 / 3
+        alts = {small_letter: 0.95, **{l: rest for l in "ABCD" if l != small_letter}}
+        write(tmp_path, "small", it, small_letter, [tok(small_letter, 0.95, alts)])
+        large_letter = "A" if i < 80 else "C"
+        write(tmp_path, "large", it, large_letter, [tok(large_letter, 0.9)])
+
+    recs = load_records(items, "small", "large", PRICES, cache_dir=tmp_path)
+    res = analyze_pair(recs, "small", "large", CRIT, seed=0)
+    assert res["strategies"]["mizan"]["escalation_rate"] == 0
+    assert res["go_checks"]["mizan_beats_random"] is False
+
+
 def test_offline_pipeline(tmp_path):
     rng = random.Random(0)
     items = []

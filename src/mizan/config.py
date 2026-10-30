@@ -31,4 +31,8 @@ def experiment() -> dict:
 
 
 def prices() -> dict:
-    return load_yaml("prices.yaml")
+    pr = load_yaml("prices.yaml")
+    # YAML parses an unquoted YYYY-MM-DD as a date, which results.json cannot serialize.
+    if pr.get("verified_on") is not None:
+        pr["verified_on"] = str(pr["verified_on"])
+    return pr
