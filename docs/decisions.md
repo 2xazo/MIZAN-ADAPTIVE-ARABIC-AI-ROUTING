@@ -58,3 +58,121 @@
   - The gain over matched Random is small and its CI includes zero. The binding test required only a higher accuracy than the Random mean.
   - The Pareto list includes never-escalating pairs that are identical to single models; they are counted as failures in the binding test.
 - 2026-10-30: Local commit and tag `dev-frozen` made as instructed. No remote, no push.
+- 2026-10-30: Coordinator decision: all of Dev 300 is EXPLORATORY. The earlier confirmation report, its GO decision and the frozen `gpt-4o-mini -> gpt-4.1-mini` point (threshold 16.5) are superseded. Tag `dev-frozen` still points at that superseded freeze. Decision 13 and the earlier signal and threshold choices are replaced by the preregistration below.
+- 2026-10-30: Offline Dev table: `scripts/analyze_curve.py`, `src/mizan/curve.py`, `artifacts/dev300_curve.md`. The rule selected target 30%. Accuracy 75.00% (225/300) clears the floor of 74.67% (224/300) by one item; 25% has 223/300.
+- 2026-10-30: New code, no API calls: `src/mizan/perturbation.py`, `scripts/build_perturbation.py`, a `perturbation` split in `scripts/run_eval.py`. The shuffled run uses its own cache, `data/cache_option_order/`, because it keeps the same IDs and would otherwise reuse the original answers. Both scripts refuse to read held-out without `--i-have-go`. Added `tests/test_curve.py` and `tests/test_perturbation.py`.
+
+## Preregistration (frozen before any held-out call)
+
+Written on 2026-10-30. Held-out has not been read, called or analyzed. If a script differs from this text, this text wins and the difference is reported.
+
+### 1. Status of Dev 300
+
+Dev 300 is exploratory. The final hypothesis was formulated after Dev and before Held-out. The pair, the signal and the 4-point rule were all chosen after Dev results for these models had been seen, so Dev numbers are not evidence for the claims below. Held-out is used ONCE, as the only confirmation. Nothing changes after seeing it.
+
+### 2. Architecture
+
+`gpt-4o-mini -> gpt-4.1`. gpt-4o-mini answers unless its output is invalid or its margin is below the threshold; then gpt-4.1 answers. An escalated item costs both calls. Model names are the aliases sent to the API. On Dev they resolved to `gpt-4o-mini-2024-07-18`, `gpt-4.1-mini-2025-04-14` and `gpt-4.1-2025-04-14`. If a different snapshot is returned on Held-out it is reported, and nothing else changes.
+
+### 3. Prompt (verbatim)
+
+System message, identical for all models:
+
+```text
+You answer Arabic multiple-choice questions. Return exactly one uppercase ASCII letter from the available choices. Return no explanation.
+```
+
+User message, one part per line, the context line only if the item has one:
+
+```text
+{context}
+{question}
+A. {option 1}
+B. {option 2}
+...
+Available choices: A, B, ...
+```
+
+Call parameters: temperature 0, logprobs true, top_logprobs 20, max_tokens 3, no structured outputs, no few-shot. Validity and parsing: `src/mizan/parsing.py` unchanged. Valid means the whole stripped output is exactly one allowed letter.
+
+### 4. Signal
+
+Margin = logprob(chosen letter) - logprob(best other valid letter) at the answer token. Missing competitor (`not_available`) scores +inf, so it never escalates by margin. Invalid output always escalates.
+
+### 5. Threshold and the rule that chose it
+
+Rule, applied exactly: "The LOWEST escalation rate whose Dev 300 accuracy is >= Always gpt-4.1 accuracy minus 4 percentage points." Grid: 0%, 5%, ..., 100% (21 points).
+
+- Target rate: 30%. Threshold: `6.249999994711611`. Escalate when `margin < 6.249999994711611`.
+- Dev 300 at this point, in sample: 90 of 300 escalated, accuracy 75.00%, cost $0.03963, saving 61.32% vs Always gpt-4.1, Mizan minus Random +4.02 points.
+- The threshold is never recalibrated on Held-out, and the 30% target is not enforced there. The achieved rate is whatever the threshold produces.
+- Known limit: margins cluster near 0.25 steps with floating-point noise. Six Dev items sit within 1e-4 of the threshold; 2 escalate and 4 do not. The exact value above is used anyway, with no rounding.
+
+### 6. Prices
+
+USD per 1M tokens, Standard tier, read from https://developers.openai.com/api/docs/pricing and verified on 2026-10-30: gpt-4o-mini 0.15 input / 0.60 output; gpt-4.1-mini 0.40 / 1.60; gpt-4.1 2.00 / 8.00. Cost = input/1M x input price + output/1M x output price. Prices are not updated after this date for this analysis.
+
+### 7. Held-out size
+
+500 items, all of `data/processed/heldout.jsonl`, with no exclusions. Each model is called once per item with caching. An interrupted run is resumed from the cache, and no analysis runs until all items are cached.
+
+### 8. Bootstrap method
+
+All intervals are two-sided 95% percentile intervals with 1000 iterations and seed 42, resampling question IDs with replacement.
+
+- Mizan vs Random: `cascade.random_chain` with `base_seed=42`. Iteration i uses `numpy.random.default_rng(42 + i)`. It draws one random routing (invalid outputs always escalate; other escalations are drawn without replacement up to Mizan's achieved count), then one resample of question IDs applied to both methods. The point estimate is Mizan accuracy minus the mean accuracy over the 1000 seeds.
+- Mizan vs a single model: `cascade.paired_bootstrap` with `seed=42`. It reports the paired accuracy difference and total cost difference on the same resampled IDs.
+
+### 9. Preregistered claims
+
+PRIMARY. Mizan vs matched Random at the same achieved escalation rate, as defined in section 8.
+- Strong success: difference positive AND the CI excludes zero.
+- Inconclusive trend, NOT a success: difference positive and the CI includes zero.
+- Failure: difference zero or negative.
+
+SECOND. Non-dominance vs Always gpt-4o-mini, Always gpt-4.1-mini and Always gpt-4.1, using the measured accuracy and total cost, with paired accuracy and cost CIs. Pareto superiority inside uncertainty is not claimed. The point is said to lie on the observed frontier only if the measured points show it.
+
+MECHANISM (reported only). At the same acceptance rate: accepted-set accuracy vs random acceptance, gpt-4o-mini error rate inside the escalated set, and margin AUROC for gpt-4o-mini correctness.
+
+EDUCATION LEVEL SLICES (descriptive only). For each value of `level`: N, accuracy, escalation rate, cost, and an accuracy CI where possible. Slices with N below 30 carry a small-slice warning. No claim is made from a slice.
+
+HELD-OUT CURVE (descriptive only). The full curve may be shown with the preregistered point visually marked. No new point is ever picked from it.
+
+### 10. Failure and anti-contamination
+
+If the primary claim fails: threshold, signal, pair and definitions do not change. The result is reported honestly, then work STOPS before any UI work.
+
+After the original held-out run, the prompt, threshold, margin, parsing, models and prices do not change, and no samples or slices are selected based on its result. No result after opening Held-out leads to re-tuning.
+
+### 11. Option-order perturbation test
+
+The name is "Option-order perturbation test". It is not a new held-out set, unseen questions, or out-of-domain data. It runs after the original held-out, with NO changes to the setup.
+
+Construction (`src/mizan/perturbation.py`), for each held-out item:
+- Seed `20261030`. Algorithm: `random.Random(f"{seed}:{id}").shuffle` (Fisher-Yates), redrawn until the displayed text order differs from the original. If that is impossible, the item is recorded in `stayed_identical`.
+- Question, context and every option text are unchanged. The prompt code relabels letters A-E by position.
+- Answer-key update: the new letter is the position of the original correct option in the new order.
+- Asserted automatically for every item: correct answer TEXT unchanged, number of options unchanged, option texts unchanged, question and context unchanged.
+- The set is built only after the original run, so the count of unchanged items is unknown until then and will be reported. On Dev 300, as a code check only, 0 of 300 stayed identical.
+
+Models run: Always gpt-4o-mini, Always gpt-4.1-mini, Always gpt-4.1. Frozen Mizan and matched Random are computed offline from those responses, with the same threshold and no recalibration. The matched Random count is the count Mizan achieves on the shuffled run.
+
+Reported for original AND shuffled: accuracy per model, Mizan accuracy, margin AUROC, escalation rate, cost, saving vs Always gpt-4.1, Mizan minus Random, invalid output rate, N.
+
+Paired by question ID, original vs shuffled: change in correctness, escalation decision, routing score (mean and median absolute change where both are finite, plus the count of finite/infinite changes), and cost.
+
+Registered claims, reported whatever the result:
+- AUROC_shuffled >= AUROC_original - 0.05, on point estimates.
+- Mizan minus Random keeps the same sign. A zero on either side does not count as the same sign unless both are zero.
+
+Descriptive: accuracy drop, escalation change, saving change, number of decisions changed by option order.
+
+Added by the executor, descriptive only: items with an option that refers to other options ("all of the above" and similar) are flagged by a fixed pattern, never removed. Moving such an option can change the question's meaning (30 of 300 flagged on Dev). The flagged count is reported, with accuracy shown for flagged and unflagged items on both runs. The registered claims always use all items.
+
+### 12. Run order after approval
+
+1. `python scripts/run_eval.py --small gpt-4o-mini --large gpt-4.1 --split heldout --n 500 --i-have-go`, then the same with `--small gpt-4.1-mini` (gpt-4.1 is already cached by then).
+2. Offline analysis of the original held-out. The analysis script is not written yet. It is committed before step 1 and implements sections 8 to 10 as written.
+3. `python scripts/build_perturbation.py --i-have-go`.
+4. The same two `run_eval.py` commands with `--split perturbation`.
+5. Offline analysis of the perturbation test.

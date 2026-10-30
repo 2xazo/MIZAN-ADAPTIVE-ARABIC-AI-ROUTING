@@ -14,6 +14,8 @@ ARTIFACTS_DIR = ROOT / "artifacts"
 
 DEV_FILE = PROCESSED_DIR / "dev.jsonl"
 HELDOUT_FILE = PROCESSED_DIR / "heldout.jsonl"
+PERTURBATION_FILE = PROCESSED_DIR / "heldout_option_order.jsonl"
+PERTURBATION_CACHE_DIR = DATA_DIR / "cache_option_order"  # same ids as held-out, so never share its cache
 SPLIT_IDS_FILE = ARTIFACTS_DIR / "split_ids.json"   # IDs only: safe to commit
 LEDGER_FILE = ARTIFACTS_DIR / "cost_ledger.jsonl"
 PROBE_FILE = ARTIFACTS_DIR / "model_probe.json"

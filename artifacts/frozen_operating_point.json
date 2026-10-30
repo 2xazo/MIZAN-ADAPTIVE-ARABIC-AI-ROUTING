@@ -1,0 +1,55 @@
+{
+ "decision": "GO to preregistration",
+ "pair": "gpt-4o-mini -> gpt-4.1",
+ "small": "gpt-4o-mini",
+ "large": "gpt-4.1",
+ "signal": "margin",
+ "rule": "The LOWEST escalation rate whose Dev 300 accuracy is >= Always gpt-4.1 accuracy minus 4 percentage points.",
+ "target_rate": 0.3,
+ "threshold": 6.249999994711611,
+ "dev300": {
+  "escalated_items": 90,
+  "achieved_rate": 0.3,
+  "accuracy": 0.75,
+  "total_cost_usd": 0.03962515,
+  "saving_vs_top": 0.613194295308565,
+  "mizan_minus_random": 0.04019666666666677,
+  "accepted_accuracy": 0.7952380952380952,
+  "error_in_escalated": 0.6,
+  "dominated_by": []
+ },
+ "dev300_always": {
+  "gpt-4o-mini": {
+   "accuracy": 0.6766666666666666,
+   "total_cost_usd": 0.00768315
+  },
+  "gpt-4.1-mini": {
+   "accuracy": 0.7333333333333333,
+   "total_cost_usd": 0.020488400000000004
+  },
+  "gpt-4.1": {
+   "accuracy": 0.7866666666666666,
+   "total_cost_usd": 0.102442
+  }
+ },
+ "prices": {
+  "verified_on": "2026-10-30",
+  "models": {
+   "gpt-4o-mini": {
+    "input": 0.15,
+    "output": 0.6
+   },
+   "gpt-4.1-mini": {
+    "input": 0.4,
+    "output": 1.6
+   },
+   "gpt-4.1": {
+    "input": 2.0,
+    "output": 8.0
+   }
+  }
+ },
+ "seed": 42,
+ "recalibrated_on_heldout": false,
+ "frozen_at": "2026-10-30T17:26:16+0300"
+}

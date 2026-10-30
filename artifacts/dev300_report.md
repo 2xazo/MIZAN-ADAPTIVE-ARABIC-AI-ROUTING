@@ -1,5 +1,7 @@
 # MIZAN Dev 300 confirmation report
 
+**Superseded on 2026-10-30.** All of Dev 300 is now exploratory, and this report's decision and frozen point no longer apply. See `docs/decisions.md` and `artifacts/dev300_curve.md`.
+
 Generated: 2026-10-30T17:13:08+0300  
 Items: first 100 (exploration), next 200 (confirmation). Held-out was not used.
 

@@ -278,7 +278,10 @@ def _boot_lines(b: dict) -> list[str]:
 
 def report_md(res: dict, spent: float, budget: float) -> str:
     D = res["designs"]
-    L = ["# MIZAN Dev 300 confirmation report", "", f"Generated: {res['generated_at']}  ",
+    L = ["# MIZAN Dev 300 confirmation report", "",
+         "**Superseded on 2026-10-30.** All of Dev 300 is now exploratory, and this report's decision and frozen point "
+         "no longer apply. See `docs/decisions.md` and `artifacts/dev300_curve.md`.", "",
+         f"Generated: {res['generated_at']}  ",
          f"Items: first 100 (exploration), next {res['n'] - EXPLORATION_N} (confirmation). Held-out was not used.", "",
          f"**Decision: {res['decision']}.** {res['decision_reason']}", ""]
     if res["warnings"]:

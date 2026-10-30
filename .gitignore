@@ -17,6 +17,7 @@ data/raw/
 data/processed/*.jsonl
 # Raw API responses (kept local; re-analysis runs from them offline)
 data/cache/
+data/cache_option_order/
 
 # OS / editor
 .DS_Store

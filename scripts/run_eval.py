@@ -10,10 +10,14 @@ import argparse
 import json
 import sys
 
-from mizan.config import DEV_FILE, HELDOUT_FILE, LEDGER_FILE, PROBE_FILE, experiment, prices
+from mizan.config import (CACHE_DIR, DEV_FILE, HELDOUT_FILE, LEDGER_FILE, PERTURBATION_CACHE_DIR, PERTURBATION_FILE,
+                          PROBE_FILE, experiment, prices)
 from mizan.costs import BudgetError, Ledger, require_verified
 from mizan.data import read_jsonl
 from mizan.runner import run_model
+
+SPLITS = {"dev": (DEV_FILE, CACHE_DIR), "heldout": (HELDOUT_FILE, CACHE_DIR),
+          "perturbation": (PERTURBATION_FILE, PERTURBATION_CACHE_DIR)}
 
 
 def overrides_for(model):
@@ -37,20 +41,21 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--small", required=True)
     ap.add_argument("--large", required=True)
-    ap.add_argument("--split", choices=["dev", "heldout"], default="dev")
+    ap.add_argument("--split", choices=list(SPLITS), default="dev")
     ap.add_argument("--n", type=int, default=100)
-    ap.add_argument("--i-have-go", action="store_true", help="required for held-out")
+    ap.add_argument("--i-have-go", action="store_true", help="required for held-out and the perturbation run")
     args = ap.parse_args()
 
-    if args.split == "heldout" and not args.i_have_go:
+    if args.split != "dev" and not args.i_have_go:
         sys.exit("Held-out is locked until the coordinator approves GO (--i-have-go).")
     cfg, pr = experiment(), prices()
     require_verified(pr)
-    items = read_jsonl(DEV_FILE if args.split == "dev" else HELDOUT_FILE)[: args.n]
+    items_file, cache_dir = SPLITS[args.split]
+    items = read_jsonl(items_file)[: args.n]
     ledger = Ledger(LEDGER_FILE, cfg["budget"]["experiments_usd"])
     try:
         for m in (args.small, args.large):
-            run_model(items, m, cfg["call"], cfg["prompt"]["system"], pr, ledger, overrides_for(m))
+            run_model(items, m, cfg["call"], cfg["prompt"]["system"], pr, ledger, overrides_for(m), cache_dir=cache_dir)
     except BudgetError as e:
         sys.exit(f"BUDGET STOP: {e}")
     print(f"done. total spent: ${ledger.spent():.4f} / ${cfg['budget']['experiments_usd']:.2f}")
