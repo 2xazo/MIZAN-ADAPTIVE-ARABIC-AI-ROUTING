@@ -2,7 +2,7 @@
 
 **Does every Arabic task need the biggest model?**
 
-MIZAN lets an economical model answer first, reads a confidence signal from the answer itself, and escalates only the uncertain cases.
+MIZAN lets an economical model answer first, and pays for the stronger model only when the answer itself shows doubt.
 
 **66% lower measured inference cost.** Tested on 500 held-out Arabic questions not used during development. MIZAN achieved 79.0% accuracy, compared with 82.6% for always using gpt-4.1.
 
@@ -44,7 +44,7 @@ Generated from [`artifacts/heldout_results.json`](artifacts/heldout_results.json
 | **Mizan** | **79.0%** | [75.4%, 82.4%] | **$0.03104** | **66.45%** [62.4%, 70.5%] |
 
 - **+5.4 accuracy points vs always using the economical model** (95% CI [+2.6, +8.4]).
-- **40% fewer accepted errors than matched random acceptance:** 15.82% vs 26.40% error at the same 74.6% acceptance.
+- **40% fewer errors among accepted answers than matched random acceptance:** 15.82% vs 26.40% error at the same 74.6% acceptance.
 - **The trade-off:** Mizan is 3.6 points below Always gpt-4.1 (95% CI [-6.0, -1.4]).
 - **Against matched Random:** +3.1 pts [-0.2, +6.0], directional, not conclusive. The preregistered primary result is "Inconclusive trend", and the overall decision is "Conditional GO with limited claims."
 
@@ -61,7 +61,7 @@ Confidence quality remained stable after the options moved. Option order changed
 
 ### Impact at scale
 
-Projected at one million similar tasks: approximately 746,000 handled without a large-model call. Projected from the 74.6% economical-model acceptance rate measured on held-out data.
+Projected at one million similar tasks: approximately 746,000 handled without a high-capability model call. Projected from the 74.6% economical-model acceptance rate measured on held-out data.
 
 ## Run the demo
 
@@ -74,7 +74,7 @@ pip install -r requirements.txt
 streamlit run app/streamlit_app.py
 ```
 
-It works without an API key: the two examples show a run labelled "Recorded run", and the replay and evidence sections use recorded results. To enable live calls, copy `.env.example` to `.env` and add your own `OPENAI_API_KEY`. Each press of "Route with MIZAN" then makes a real, paid call with the frozen prompt, settings and threshold. The two examples always show the recorded run. Live spend goes to a separate local ledger, `artifacts/demo_ledger.jsonl`, and stops at $2.00.
+It works without an API key: the two examples show a run labelled "Recorded run", and the replay and evidence sections use recorded results. The live form is hidden by default. To enable it, set `MIZAN_LIVE_LAB=1`, copy `.env.example` to `.env`, and add your own `OPENAI_API_KEY`. Each press of "Route with MIZAN" then makes a real, paid call with the frozen prompt, settings and threshold. The two examples always show the recorded run. Live spend goes to a separate local ledger, `artifacts/demo_ledger.jsonl`, and stops at $2.00.
 
 ## Recompute offline
 
@@ -92,7 +92,7 @@ The raw API responses are not in this repository. `scripts/analyze_heldout.py` n
 
 ## Technical details and limitations
 
-- **The split.** The final evaluation used a subject-by-level-disjoint held-out split; the exact manifest and limitation are documented in GitHub. Development and held-out data share none of the 40 subject-by-level groups, though 7 subjects appear on both sides at different levels. Results describe the 25 held-out groups, equally weighted, not ArabicMMLU as a whole. Development and held-out numbers are not comparable samples. See [`artifacts/heldout_report.md`](artifacts/heldout_report.md), section 4.
+- **The split.** The realized evaluation split was subject-by-level disjoint; the exact manifest was preserved, and the splitter was fixed with a regression test. Development and held-out data share none of the 40 subject-by-level groups, though 7 subjects appear on both sides at different levels. Results describe the 25 held-out groups, equally weighted, not ArabicMMLU as a whole. Development and held-out numbers are not comparable samples. See [`artifacts/heldout_report.md`](artifacts/heldout_report.md), section 4.
 - **The split code.** `stratified_split` had a bug that kept each group entirely on one side. It is fixed for future use, but no data or result was regenerated. All reported results use the original split, listed in [`artifacts/split_ids.json`](artifacts/split_ids.json). `scripts/prepare_data.py` rebuilds that split by default.
 - **gpt-4.1-mini.** Always gpt-4.1-mini costs less than Mizan ($0.01851 vs $0.03104). Mizan is +3.0 points [-0.2, +6.4] on accuracy, an interval that includes zero, so Mizan is not shown to be more accurate than it.
 - **Paired comparisons, original run:**

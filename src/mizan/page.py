@@ -208,42 +208,36 @@ def demo_panels(examples: dict | None) -> dict:
 # ---------------------------------------------------------------- metric detail panels
 
 
-def detail(plain: str, how: str, exact: str) -> str:
-    return (f'<div class="detail"><p>{plain}</p><dl><div><dt>How it was measured</dt><dd>{how}</dd></div>'
-            f'<div><dt>Exact value</dt><dd class="exact">{exact}</dd></div></dl></div>')
+def detail(plain: str, how: str) -> str:
+    return f'<div class="detail"><p>{plain}</p><dl><div><dt>How it was measured</dt><dd>{how}</dd></div></dl></div>'
+
+
+def cost_basis(res: dict) -> str:
+    return f"{S.COST_BASIS} Prices verified on {res['preflight']['prices_verified_on']}."
 
 
 def metric_details(res: dict) -> dict:
+    """Plain explanations for the page. Exact values and intervals live in Technical details."""
     o = res["original"]
     behind = abs(o["non_dominance"]["paired"][S.LARGE]["accuracy_diff"]["observed"]) * 100
     z, m = o["mizan"], o["mechanism"]
-    small = o["singles"][S.SMALL]
-    paired, against_top = o["non_dominance"]["paired"][S.SMALL]["accuracy_diff"], o["non_dominance"]["paired"][S.LARGE]["accuracy_diff"]
-    d = o["mizan_minus_random"]
     accepted = o["n"] - z["escalated_items"]
     return {
         "detail_saving": detail(
-            f"Across the held-out test, MIZAN used {pct(1 - z['saving_vs_top'])} of the inference cost of sending every request to {S.LARGE}.",
-            f"Each strategy is priced per token from the same {o['n']} recorded requests. The cost of escalated requests, which pay for both calls, is included in MIZAN's total.",
-            f"{pct(z['saving_vs_top'])} lower. 95% CI {ci_pct(z['saving_ci95'])}."),
+            f"Across the held-out test, MIZAN cost {z['saving_vs_top'] * 100:.0f}% less than sending every request to the high-capability model.",
+            f"{cost_basis(res)} Each strategy is priced from the same {o['n']} recorded requests. Escalated requests pay for both calls, and that is included."),
         "detail_points": detail(
-            f"MIZAN answered more questions correctly than always using {S.SMALL}, the economical model on its own.",
-            f"Accuracy on the same {o['n']} questions: {pct(z['accuracy'], 1)} for MIZAN and {pct(small['accuracy'], 1)} for always {S.SMALL}, compared with a paired bootstrap. "
-            f"The trade-off is that MIZAN is {abs(against_top['observed']) * 100:.1f} points below always {S.LARGE}, 95% CI {ci_pts(against_top['ci95'])}.",
-            f"{pts(paired['observed'], 2)} accuracy points. 95% CI {ci_pts(paired['ci95'])}."),
+            "MIZAN answered more questions correctly than always using the economical model on its own.",
+            f"Accuracy on the same {o['n']} questions: {pct(z['accuracy'], 1)} for MIZAN and {pct(o['singles'][S.SMALL]['accuracy'], 1)} for the economical model alone."),
         "detail_errors": detail(
             "When MIZAN keeps the economical model's answer, that answer is wrong less often than if the same share of answers were kept at random.",
-            f"MIZAN accepted {accepted} of {o['n']} answers, and {pct(m['selective_risk'])} of those were wrong. Accepting at random at the same rate would keep the model's overall error rate of {pct(m['random_acceptance_risk'])}.",
-            f"{pct(S.relative_error_reduction(res))} fewer ({pct(m['selective_risk'])} vs {pct(m['random_acceptance_risk'])}). The results file records no 95% CI for this ratio. "
-            f"The related overall accuracy gain over matched random is {pts(d['observed'])} points, 95% CI {ci_pts(d['ci95'])}, which is directional, not conclusive."),
+            f"MIZAN accepted {accepted} of {o['n']} answers, and {pct(m['selective_risk'])} of those were wrong. Accepting at random at the same rate would keep the model's overall error rate of {pct(m['random_acceptance_risk'])}."),
         "detail_large": detail(
-            f"MIZAN gives up {behind:.1f} accuracy points against sending every request to {S.LARGE}, in exchange for the lower cost.",
-            f"Accuracy on the same {o['n']} questions: {pct(z['accuracy'], 1)} for MIZAN and {pct(o['singles'][S.LARGE]['accuracy'], 1)} for always {S.LARGE}, compared with a paired bootstrap.",
-            f"{behind:.1f} points below. 95% CI {ci_pts(o['non_dominance']['paired'][S.LARGE]['accuracy_diff']['ci95'])}."),
+            f"MIZAN gives up {behind:.1f} accuracy points against sending every request to the high-capability model, in exchange for the lower cost.",
+            f"Accuracy on the same {o['n']} questions: {pct(z['accuracy'], 1)} for MIZAN and {pct(o['singles'][S.LARGE]['accuracy'], 1)} for the always-large baseline."),
         "detail_n": detail(
             f"The evaluation used {o['n']} Arabic multiple-choice questions that were not used during development.",
-            f"{e(S.SPLIT_SENTENCE)} The threshold and the prompt were frozen before the run.",
-            f"{o['n']} questions, one run per model. This is a count, so it has no confidence interval."),
+            "The threshold and the prompt were frozen before the run."),
     }
 
 
@@ -275,6 +269,7 @@ def tech_confidence(res: dict, examples: dict | None) -> str:
     robust = [[r["metric"], r["original"], r["shuffled"]] for r in S.robustness_rows(res)]
     accepted_rows = [["Share accepted", pct(m["coverage"], 1)], ["Accuracy of accepted answers", pct(m["accepted_accuracy"])],
                      ["Error among accepted answers", pct(m["selective_risk"])], ["Error under matched random acceptance", pct(m["random_acceptance_risk"])],
+                     ["Relative error reduction (the results file records no 95% CI for this ratio)", pct(S.relative_error_reduction(res))],
                      [f"{S.SMALL} error among escalated requests", pct(m["small_error_in_escalated"])]]
     raw = f'<p>Threshold as stored: {o["threshold"]!r}.</p>'
     if examples:
@@ -354,8 +349,8 @@ def replay_data(res: dict, per_item: dict) -> dict:
     top = totals["always_large_cost_usd"]
     return {"ids": per_item["ids"], "esc": [int(r["escalated"]) for r in rows], "ok": [int(r["correct"]) for r in rows],
             "cost": [r["cost_usd"] / top for r in rows], "always": [r["always_large_cost_usd"] / top for r in rows],
-            "final": {"processed": str(o["n"]), "saving": pct(o["mizan"]["saving_vs_top"]), "accuracy": pct(o["mizan"]["accuracy"], 1),
-                      "handled": pct(o["mechanism"]["coverage"], 1), "cost": pct(1 - o["mizan"]["saving_vs_top"])}}
+            "final": {"processed": str(o["n"]), "saving": pct(o["mizan"]["saving_vs_top"], 0), "accuracy": pct(o["mizan"]["accuracy"], 1),
+                      "handled": pct(o["mechanism"]["coverage"], 1)}}
 
 
 def chart_data(res: dict) -> dict:
@@ -382,14 +377,13 @@ def chart_data(res: dict) -> dict:
 def scale_cards(res: dict) -> list[dict]:
     share = pct(res["original"]["mechanism"]["coverage"], 1)
     return [{"title": "Arabic request", "text": "An Arabic task arrives. Nothing is decided in advance."},
-            {"title": "Small model answers first", "text": "An economical model answers first. Its answer comes with a confidence signal, with no additional model call."},
+            {"title": "Economical model answers first", "text": f"An economical model answers first. {S.CONFIDENCE_CHECK}"},
             {"title": "Confidence is weighed", "text": "MIZAN compares the top answer with its closest rival. A wide gap is kept; a narrow gap or invalid output is escalated."},
-            {"title": "Large model only if needed", "text": f"Only uncertain cases reach the stronger model. On our held-out test, {share} never needed it."}]
+            {"title": "High-capability model only if needed", "text": f"Only uncertain cases reach the high-capability model. On our held-out test, {share} never needed it."}]
 
 
 def robustness_data(res: dict, examples: dict | None) -> dict:
-    o, s = res["original"], res["perturbation"]
-    out = {"original": f"{o['mechanism']['auroc']:.3f}", "shuffled": f"{s['mechanism']['auroc']:.3f}", "options": [], "shuffled_positions": []}
+    out = {"options": [], "shuffled_positions": []}
     if examples:
         ex = examples["examples"]["high_confidence"]
         perm, _ = permutation_for(ex["options"], ex["id"])
@@ -424,12 +418,13 @@ def tokens_for(res: dict, examples: dict | None) -> dict:
     tokens = {
         "eyebrow": e(h["eyebrow"]), "headline": e(h["headline"]), "subheadline": e(h["subheadline"]),
         "metric_value": e(h["metric_value"]), "metric_label": e(h["metric_label"]),
-        "chip_points": f"{paired * 100:+.1f} pts vs always-small", "chip_errors": f"{reduction * 100:.0f}% fewer accepted errors", "chip_n": f"{o['n']} held-out questions",
-        "tradeoff": f"{pct(z['accuracy'], 1)} MIZAN accuracy vs {pct(o['singles'][S.LARGE]['accuracy'], 1)} for always {S.LARGE}.",
+        "chip_points": f"{paired * 100:+.1f} pts vs always-economical", "chip_errors": f"{reduction * 100:.0f}% fewer errors among accepted answers", "chip_n": f"{o['n']} held-out questions",
+        "tradeoff": f"{pct(z['accuracy'], 1)} MIZAN accuracy vs {pct(o['singles'][S.LARGE]['accuracy'], 1)} for the always-large baseline.",
+        "cost_basis": e(cost_basis(res)), "routing_layer": e(S.ROUTING_LAYER), "core_sentence": e(S.CORE_SENTENCE),
         "card_saving": f"{z['saving_vs_top'] * 100:.0f}%", "card_points": f"{paired * 100:+.1f}", "card_large": f"{abs(o['non_dominance']['paired'][S.LARGE]['accuracy_diff']['observed']) * 100:.1f}",
         "errors_big": f"{reduction * 100:.0f}%", "error_mizan": pct(m["selective_risk"]), "error_random": pct(m["random_acceptance_risk"]),
         "error_mizan_w": f"{m['selective_risk'] / m['random_acceptance_risk'] * 100:.2f}",
-        "auroc_original": f"{m['auroc']:.3f}", "robust_badge": "Preregistered robustness check passed" if claims else "Preregistered robustness check did not pass",
+        "robust_badge": "Preregistered robustness check passed" if claims else "Preregistered robustness check did not pass",
         "robust_badge_class": "pass" if claims else "fail",
         "impact_handled_share": pct(m["coverage"], 1), "impact_esc_share": pct(z["achieved_escalation"], 1),
         "impact_handled_w": f"{m['coverage'] * 100:.1f}", "impact_esc_w": f"{z['achieved_escalation'] * 100:.1f}",

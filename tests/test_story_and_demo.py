@@ -34,11 +34,11 @@ def test_exact_copy(res):
     h = S.hero_copy(res)
     assert h["metric_value"] + " " + h["metric_label"] == "66% LOWER MEASURED INFERENCE COST"
     assert h["proofs"] == ["+5.4 accuracy points vs always using the economical model",
-                           "40% fewer accepted errors than matched random acceptance",
+                           "40% fewer errors among accepted answers than matched random acceptance",
                            "Stable confidence after option-order shuffling"]
     assert h["evaluation"] == "Tested on 500 held-out Arabic questions not used during development."
     assert h["tradeoff"] == "MIZAN achieved 79.0% accuracy, compared with 82.6% for always using gpt-4.1."
-    assert S.impact_copy(res) == ("Projected at one million similar tasks: approximately 746,000 handled without a large-model call.",
+    assert S.impact_copy(res) == ("Projected at one million similar tasks: approximately 746,000 handled without a high-capability model call.",
                                   "Projected from the 74.6% economical-model acceptance rate measured on held-out data.")
     assert S.directional_copy(res) == "+3.1 pts [-0.2, +6.0]"
     assert round(S.relative_error_reduction(res) * 100, 2) == 40.08
@@ -259,8 +259,8 @@ def test_every_template_token_has_a_value(res, examples):
 def test_page_values_come_from_the_results_file(res, examples):
     per = S.load_json(S.PER_ITEM)
     page = P.build_page(res, per, examples)
-    for phrase in ("66%", "LOWER MEASURED INFERENCE COST", "+5.4 pts vs always-small", "40% fewer accepted errors", "500 held-out questions",
-                   "79.0% MIZAN accuracy vs 82.6% for always gpt-4.1.", "+2.6 to +8.4 points", "40.08%"):
+    for phrase in ("66%", "LOWER MEASURED INFERENCE COST", "+5.4 pts vs always-economical", "40% fewer errors among accepted answers", "500 held-out questions",
+                   "79.0% MIZAN accuracy vs 82.6% for the always-large baseline.", "+2.6 to +8.4 points", "40.08%"):
         assert phrase in visible(page), phrase
     for phrase in ("62.44% to 70.48%", "15.82%", "26.40%", "0.821", "Preregistered robustness check passed", "74.6%", "25.4%", "Projected from measured held-out routing rates."):
         assert phrase in visible(page), phrase
@@ -280,13 +280,52 @@ def test_scale_dims_only_during_an_interaction():
 
 def test_scale_cards_have_the_measured_share(res):
     cards = P.scale_cards(res)
-    assert [c["title"] for c in cards] == ["Arabic request", "Small model answers first", "Confidence is weighed", "Large model only if needed"]
-    assert cards[3]["text"] == "Only uncertain cases reach the stronger model. On our held-out test, 74.6% never needed it."
+    assert [c["title"] for c in cards] == ["Arabic request", "Economical model answers first", "Confidence is weighed", "High-capability model only if needed"]
+    assert cards[3]["text"] == "Only uncertain cases reach the high-capability model. On our held-out test, 74.6% never needed it."
 
 
-def test_forty_percent_detail_does_not_invent_an_interval(res):
-    text = P.metric_details(res)["detail_errors"]
+def test_forty_percent_detail_does_not_invent_an_interval(res, examples):
+    text = P.tech_confidence(res, examples)
     assert "records no 95% CI" in text and "directional, not conclusive" in text
+
+
+def page_without(document: str, *ids: str) -> str:
+    """Visible markup with the named sections removed."""
+    text = visible(document)
+    for name in ids:
+        text, n = re.subn(rf'<section class="s [\w-]+" id="{name}".*?</section>', "", text, flags=re.S)
+        assert n == 1, name
+    return text
+
+
+@pytest.fixture
+def page(res, examples):
+    return P.build_page(res, S.load_json(S.PER_ITEM), examples)
+
+
+def test_core_wording_is_exact(page):
+    text = visible(page)
+    assert S.CORE_SENTENCE in text and "MIZAN is selective about which answers to trust." in text
+    assert "40% fewer errors among the answers MIZAN accepted than matched random acceptance at the same acceptance rate." in text
+    assert "provider-independent routing layer for models that expose token-level confidence" in text
+    assert "Measured from recorded input/output tokens using the fixed prices documented in the repository. Prices verified on 2026-10-30." in text
+
+
+def test_wording_rules_hold_across_page_and_readme(page):
+    for text in (visible(page) + json.dumps(script_data(page), ensure_ascii=False), (ROOT / "README.md").read_text(encoding="utf-8")):
+        low = text.lower()
+        for word in S.FORBIDDEN:
+            assert word not in low, word
+        assert not re.search(r"40% fewer errors(?! among)", text)
+        assert not re.search(r"(?<!requires )no additional model call", low)
+
+
+def test_exact_saving_and_model_names_stay_in_technical_sections(page):
+    assert "66.45" in visible(page)
+    assert "66.45" not in page_without(page, "technical")
+    assert "66.45" not in json.dumps(script_data(page)["replay"])
+    assert "33.55" not in page_without(page, "technical")
+    assert "gpt-" not in page_without(page, "demo", "technical")
 
 
 def test_dollars_stay_inside_the_technical_section(res, examples):
@@ -312,7 +351,7 @@ def test_replay_data_rebuilds_the_results_from_every_item(res):
     assert sum(r["ok"]) / 500 == o["mizan"]["accuracy"]
     assert math.isclose(1 - sum(r["cost"]) / sum(r["always"]), o["mizan"]["saving_vs_top"], rel_tol=1e-9)
     assert math.isclose(sum(r["always"]), 1.0)
-    assert r["final"] == {"processed": "500", "saving": "66.45%", "accuracy": "79.0%", "handled": "74.6%", "cost": "33.55%"}
+    assert r["final"] == {"processed": "500", "saving": "66%", "accuracy": "79.0%", "handled": "74.6%"}
 
 
 def test_replay_refuses_a_table_that_disagrees_with_the_results(res):
@@ -365,7 +404,6 @@ def test_chart_uses_relative_cost_and_labels_each_interval(res):
 
 def test_robustness_order_is_the_recorded_shuffle(res, examples):
     r = P.robustness_data(res, examples)
-    assert (r["original"], r["shuffled"]) == ("0.821", "0.825")
     if examples:
         assert sorted(r["shuffled_positions"]) == list(range(len(r["options"])))
         assert r["shuffled_positions"] != list(range(len(r["options"])))
@@ -499,7 +537,7 @@ def test_app_chart_and_scripts_are_embedded(app):
     frames = [el.proto.srcdoc for el in app.get("iframe")]
     assert len(frames) == 1
     assert "plotly.js (basic - minified)" in frames[0]
-    assert script_data(frames[0])["scale"] and script_data(frames[0])["replay"]["final"]["saving"] == "66.45%"
+    assert script_data(frames[0])["scale"] and script_data(frames[0])["replay"]["final"]["saving"] == "66%"
 
 
 def test_app_free_input_validates_and_sends_nothing_without_a_key(lab):

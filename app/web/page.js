@@ -187,7 +187,6 @@
       $("#r-saving").textContent = v.saving;
       $("#r-accuracy").textContent = v.accuracy;
       $("#r-handled").textContent = v.handled;
-      $("#r-cost").textContent = v.cost;
       $("#r-count").textContent = String(upto);
       bar.style.width = (upto / total * 100) + "%";
       wrap.setAttribute("aria-valuenow", String(upto));
@@ -196,7 +195,7 @@
     var at = function (upto) {
       var cost = 0, always = 0, ok = 0, esc = 0;
       for (var k = 0; k < upto; k++) { cost += R.cost[k]; always += R.always[k]; ok += R.ok[k]; esc += R.esc[k]; }
-      show({ saving: pct(1 - cost / always, 2), accuracy: pct(ok / upto, 1), handled: pct((upto - esc) / upto, 1), cost: pct(cost / always, 2) }, upto);
+      show({ saving: pct(1 - cost / always, 0), accuracy: pct(ok / upto, 1), handled: pct((upto - esc) / upto, 1) }, upto);
     };
     showFinal();
     play.addEventListener("click", function () {
@@ -332,8 +331,6 @@
       stack.appendChild(row);
       return row;
     });
-    var auroc = $("#rb-auroc");
-    var tween = null;
     var place = function (shuffled) {
       rows.forEach(function (row, i) {
         var pos = shuffled ? Rb.shuffled_positions[i] : i;
@@ -341,23 +338,11 @@
         $("bdi", row).textContent = letters[pos];
       });
     };
-    var setValue = function (target) {
-      cancelAnimationFrame(tween);
-      if (reduced) { auroc.textContent = target; return; }
-      var from = parseFloat(auroc.textContent), to = parseFloat(target), started = performance.now();
-      var frame = function (now) {
-        var t = Math.min(1, (now - started) / 600);
-        auroc.textContent = t === 1 ? target : (from + (to - from) * t).toFixed(3);
-        if (t < 1) tween = requestAnimationFrame(frame);
-      };
-      tween = requestAnimationFrame(frame);
-    };
     var original = $("#rb-original"), shuffled = $("#rb-shuffled");
     var mode = function (isShuffled) {
       original.setAttribute("aria-pressed", String(!isShuffled));
       shuffled.setAttribute("aria-pressed", String(isShuffled));
       place(isShuffled);
-      setValue(isShuffled ? Rb.shuffled : Rb.original);
     };
     original.addEventListener("click", function () { mode(false); });
     shuffled.addEventListener("click", function () { mode(true); });

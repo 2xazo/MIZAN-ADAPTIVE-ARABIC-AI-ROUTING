@@ -18,8 +18,13 @@ PER_ITEM = ARTIFACTS_DIR / "heldout_per_item.json"
 EXAMPLES = ARTIFACTS_DIR / "demo_examples.json"
 
 PROJECTION_TASKS = 1_000_000
-FORBIDDEN = ("unseen", "works with any provider", "only where it adds value", "free verification")
-SPLIT_SENTENCE = "The final evaluation used a subject-by-level-disjoint held-out split; the exact manifest and limitation are documented in GitHub."
+FORBIDDEN = ("unseen", "works with any provider", "allam integration", "only where it adds value", "free verification", "beats random", "outperforms the mid-size model", "safe to trust", "model-agnostic", "statistically significant", "no extra model call")
+SPLIT_SENTENCE = "The realized evaluation split was subject-by-level disjoint; the exact manifest was preserved, and the splitter was fixed with a regression test."
+CORE_SENTENCE = "MIZAN lets an economical model answer first, and pays for the stronger model only when the answer itself shows doubt."
+CORE_SENTENCE_TECHNICAL = "MIZAN lets an economical model answer first, and pays for the stronger model only when the answer itself shows doubt or fails output validation."
+CONFIDENCE_CHECK = "The confidence check itself requires no additional model call."
+ROUTING_LAYER = "provider-independent routing layer for models that expose token-level confidence"
+COST_BASIS = "Measured from recorded input/output tokens using the fixed prices documented in the repository."
 SMALL, MID, LARGE = H.SMALL, H.MID, H.LARGE
 
 
@@ -57,12 +62,11 @@ def hero_copy(res: dict) -> dict:
     o = res["original"]
     return {"eyebrow": "Built for efficient Arabic AI at scale",
             "headline": "Does every Arabic task need the biggest model?",
-            "subheadline": "MIZAN lets an economical model answer first, reads a confidence signal from the answer itself, "
-                           "and escalates only the uncertain cases.",
+            "subheadline": CORE_SENTENCE,
             "metric_value": f"{o['mizan']['saving_vs_top'] * 100:.0f}%",
             "metric_label": "LOWER MEASURED INFERENCE COST",
             "proofs": [f"{o['non_dominance']['paired'][SMALL]['accuracy_diff']['observed'] * 100:+.1f} accuracy points vs always using the economical model",
-                       f"{relative_error_reduction(res) * 100:.0f}% fewer accepted errors than matched random acceptance",
+                       f"{relative_error_reduction(res) * 100:.0f}% fewer errors among accepted answers than matched random acceptance",
                        "Stable confidence after option-order shuffling"],
             "evaluation": f"Tested on {o['n']} held-out Arabic questions not used during development.",
             "tradeoff": f"MIZAN achieved {o['mizan']['accuracy'] * 100:.1f}% accuracy, compared with {o['singles'][LARGE]['accuracy'] * 100:.1f}% for always using {LARGE}."}
@@ -70,7 +74,7 @@ def hero_copy(res: dict) -> dict:
 
 def impact_copy(res: dict) -> tuple[str, str]:
     cov = res["original"]["mechanism"]["coverage"]
-    return (f"Projected at one million similar tasks: approximately {round(PROJECTION_TASKS * cov):,} handled without a large-model call.",
+    return (f"Projected at one million similar tasks: approximately {round(PROJECTION_TASKS * cov):,} handled without a high-capability model call.",
             f"Projected from the {cov * 100:.1f}% economical-model acceptance rate measured on held-out data.")
 
 
