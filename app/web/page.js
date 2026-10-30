@@ -115,6 +115,14 @@
     var beam = $(".beam", stage);
     var points = $$(".pt", stage);
     var tiltTimer = null;
+    /* The card always shows the last point. Dimming happens only during an interaction, and the scale is otherwise at full colour. */
+    var HOLD_AFTER_CLICK_MS = 2000;
+    var held = { hover: 0, keyboard: 0, click: 0 };
+    var clickTimer = null;
+    var syncHighlight = function () {
+      var n = held.hover || held.keyboard || held.click;
+      if (n) stage.setAttribute("data-highlight", n); else stage.removeAttribute("data-highlight");
+    };
     var activate = function (n) {
       stage.setAttribute("data-active", n);
       card.setAttribute("data-tone", n);
@@ -130,10 +138,31 @@
     };
     points.forEach(function (p) {
       var n = Number(p.getAttribute("data-p"));
-      p.addEventListener("mouseenter", function () { activate(n); });
-      p.addEventListener("focus", function () { activate(n); });
+      p.addEventListener("pointerenter", function (ev) {
+        if (ev.pointerType !== "mouse") return;
+        activate(n);
+        held.hover = n;
+        syncHighlight();
+      });
+      p.addEventListener("pointerleave", function (ev) {
+        if (ev.pointerType !== "mouse") return;
+        held.hover = 0;
+        syncHighlight();
+      });
+      p.addEventListener("focus", function () {
+        activate(n);
+        if (p.matches(":focus-visible")) { held.keyboard = n; syncHighlight(); }
+      });
+      p.addEventListener("blur", function () {
+        held.keyboard = 0;
+        syncHighlight();
+      });
       p.addEventListener("click", function () {
         activate(n);
+        held.click = n;
+        syncHighlight();
+        clearTimeout(clickTimer);
+        clickTimer = setTimeout(function () { held.click = 0; syncHighlight(); }, HOLD_AFTER_CLICK_MS);
         if (n === 2) tilt(-8);
         if (n === 4) tilt(8);
       });

@@ -71,10 +71,10 @@ h1 { font-size: clamp(2rem, 3.7vw, 3.15rem); font-weight: 700; line-height: 1.1;
 .ring-b { animation: spin 60s linear infinite reverse; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .part { transition: opacity .3s ease; }
-.stage[data-active="1"] .part:not(.p-request),
-.stage[data-active="2"] .part:not(.p-small),
-.stage[data-active="3"] .part:not(.p-gate),
-.stage[data-active="4"] .part:not(.p-large) { opacity: .4; }
+.stage[data-highlight="1"] .part:not(.p-request),
+.stage[data-highlight="2"] .part:not(.p-small),
+.stage[data-highlight="3"] .part:not(.p-gate),
+.stage[data-highlight="4"] .part:not(.p-large) { opacity: .4; }
 .beam { --tilt: 0deg; transform-box: view-box; transform-origin: 60px 40px; transform: rotate(var(--tilt)); transition: transform .8s cubic-bezier(.3, 1.4, .5, 1); }
 .pan { transform-box: view-box; transition: transform .8s cubic-bezier(.3, 1.4, .5, 1), opacity .3s ease; transform: rotate(calc(var(--tilt) * -1)); }
 .pan-l { transform-origin: 18px 40px; }

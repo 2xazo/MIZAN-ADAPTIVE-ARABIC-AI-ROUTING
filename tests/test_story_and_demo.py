@@ -271,6 +271,13 @@ def test_page_values_come_from_the_results_file(res, examples):
     assert "50.0%" in visible(P.build_bottom(changed, per, examples))
 
 
+def test_scale_dims_only_during_an_interaction():
+    css, top = (P.WEB / "page.css").read_text(encoding="utf-8"), (P.WEB / "top.html").read_text(encoding="utf-8")
+    assert '.stage[data-highlight="1"] .part:not(.p-request)' in css
+    assert '.stage[data-active' not in css
+    assert 'data-active="1"' in top and "data-highlight" not in top  # the default card shows with nothing dimmed
+
+
 def test_scale_cards_have_the_measured_share(res):
     cards = P.scale_cards(res)
     assert [c["title"] for c in cards] == ["Arabic request", "Small model answers first", "Confidence is weighed", "Large model only if needed"]
