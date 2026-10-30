@@ -1,0 +1,8 @@
+{"ts": 1793376327.1665826, "run": "heldout", "command_small": "gpt-4o-mini", "model": "gpt-4o-mini", "source": "data\\cache", "hits": 0, "misses": 500}
+{"ts": 1793376327.1753533, "run": "heldout", "command_small": "gpt-4o-mini", "model": "gpt-4.1", "source": "data\\cache", "hits": 0, "misses": 500}
+{"ts": 1793378522.7864866, "run": "heldout", "command_small": "gpt-4.1-mini", "model": "gpt-4.1-mini", "source": "data\\cache", "hits": 0, "misses": 500}
+{"ts": 1793378522.7869484, "run": "heldout", "command_small": "gpt-4.1-mini", "model": "gpt-4.1", "source": "data\\cache", "hits": 500, "misses": 0}
+{"ts": 1793382909.9076884, "run": "perturbation", "command_small": "gpt-4o-mini", "model": "gpt-4o-mini", "source": "data\\cache_option_order", "hits": 0, "misses": 500}
+{"ts": 1793382909.9135995, "run": "perturbation", "command_small": "gpt-4o-mini", "model": "gpt-4.1", "source": "data\\cache_option_order", "hits": 0, "misses": 500}
+{"ts": 1793384813.6792727, "run": "perturbation", "command_small": "gpt-4.1-mini", "model": "gpt-4.1-mini", "source": "data\\cache_option_order", "hits": 0, "misses": 500}
+{"ts": 1793384813.679906, "run": "perturbation", "command_small": "gpt-4.1-mini", "model": "gpt-4.1", "source": "data\\cache_option_order", "hits": 500, "misses": 0}

@@ -1,0 +1,79 @@
+{
+ "recorded_at": "2026-10-30T17:47:05+0300",
+ "approved_commit": "a34020c1e01758f9098cf529c5e7b615088805ba",
+ "head": "47ee70a0a02d5fec8d17711fc8beb6c7b2db6c24",
+ "git_status_porcelain": [],
+ "added_since_approved": [
+  "scripts/analyze_heldout.py",
+  "scripts/run_heldout.py",
+  "src/mizan/heldout.py",
+  "tests/test_heldout.py"
+ ],
+ "decisions_sha256": "e10b267690d74b6c8aa776b7c74fba1c2fce42192e41e2296354bb4975d35dd8",
+ "threshold_from_config": 6.249999994711611,
+ "target_rate": 0.3,
+ "signal": "margin",
+ "model_aliases_sent": [
+  "gpt-4o-mini",
+  "gpt-4.1-mini",
+  "gpt-4.1"
+ ],
+ "dev_snapshots_expected": {
+  "gpt-4o-mini": "gpt-4o-mini-2024-07-18",
+  "gpt-4.1-mini": "gpt-4.1-mini-2025-04-14",
+  "gpt-4.1": "gpt-4.1-2025-04-14"
+ },
+ "prices_per_1m": {
+  "gpt-4o-mini": {
+   "input": 0.15,
+   "output": 0.6
+  },
+  "gpt-4.1-mini": {
+   "input": 0.4,
+   "output": 1.6
+  },
+  "gpt-4.1": {
+   "input": 2.0,
+   "output": 8.0
+  }
+ },
+ "prices_verified_on": "2026-10-30",
+ "heldout_size": 500,
+ "heldout_dev_id_overlap": 0,
+ "heldout_dev_same_question_text": 0,
+ "caches": {
+  "original": "data\\cache",
+  "option_order": "data\\cache_option_order"
+ },
+ "max_expected_cost_usd": 1.2623214,
+ "max_cost_per_model_per_run_usd": {
+  "gpt-4o-mini": 0.0371271,
+  "gpt-4.1-mini": 0.0990056,
+  "gpt-4.1": 0.495028
+ },
+ "spent_before_usd": 0.13061355,
+ "budget_usd": 8.0,
+ "file_sha256": {
+  "config/experiment.yaml": "190b3c275326a64dcd76ea1105d12a67628982841a3ac3287d8b2a529cba869d",
+  "config/prices.yaml": "1c68254211fd2fb2a8ba5eb4e408556cd5c17903114adac81530e57d33ac9e43",
+  "artifacts/frozen_operating_point.json": "8daac4e442c76724a1b8ee3f472745c8f1e10452726aee9d04614a6e7b770b18",
+  "artifacts/model_probe.json": "294d0d633352caa6b1ad8fa5668f8c22b8804b767089381d785436fb539129ad",
+  "docs/decisions.md": "e10b267690d74b6c8aa776b7c74fba1c2fce42192e41e2296354bb4975d35dd8",
+  "src/mizan/client.py": "95b9f97d789ae58ed4f10d894e990088ab4b0ab699a03f2b40f9652bbee63f56",
+  "src/mizan/parsing.py": "cbb99f668ad2055df367302a30a95d2ae42438066282f112fd521a81f7804a30",
+  "src/mizan/prompts.py": "877c046ce8b207d0ba923c9bedda602fb11958995dc7c7735a2491918d77fe97",
+  "src/mizan/routing.py": "294bc3a47d754a92db8b11bcdb1cd715033a51bb63bc6fc3a614500407d5957b",
+  "src/mizan/cascade.py": "967509eea9b80f303847aff50943f82b1102d073ccd975b10c4e85b449f83508",
+  "src/mizan/curve.py": "7c694d83819d6483e6bedb55c06b10284536f6450bbd7010aaf12354de9f9117",
+  "src/mizan/heldout.py": "08a09e356774d08493108ec6be261bc6b11e4f23b4a27de4a2eb5e964e46a586",
+  "src/mizan/metrics.py": "4580cfe915dd1d1524751a7b77a1ca1126eb37d070149a2e6ebba429d6749f21",
+  "src/mizan/perturbation.py": "8b98f3910b21e04c013be2bab3a3b7573d73188f2629466cd236e29c7c5cea5f",
+  "src/mizan/runner.py": "9ada2c92eb9095e36a2a684c1ae474090c8621e7b9b6d665e65a30e11faac59b",
+  "src/mizan/costs.py": "21077dac101ad29c0a56f05a8d832518af0bf39de6b188653de398bbe3f29f31",
+  "scripts/run_eval.py": "d0da4afd9336de32d24b95ef5dfa9909d4478841bce0ea7f986d7fb80b2b3589",
+  "scripts/run_heldout.py": "e7942ab8b6a2189ceecc11ba73eb4229a6b9b5b9090ede331e49dfd6a06ae3cf",
+  "scripts/build_perturbation.py": "d3cbbb467cc6df6f2b980cb85874c8753c6ddc0513cd8411db0c044e72a5a087",
+  "scripts/analyze_heldout.py": "5a82c0bea5b680898a3487aeddd0dd1c125940477828d84feff1f5d9af2b8386",
+  "data/processed/heldout.jsonl": "df3464d32653a8fec17f94b81925da2f4898c60f80150ea9c2fc1ecefa4f908a"
+ }
+}

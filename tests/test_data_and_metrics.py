@@ -38,6 +38,35 @@ def test_split_disjoint_deterministic_and_stratified():
         assert all(abs(v - size / 5) <= 3 for v in c.values())
 
 
+def test_split_shares_strata_when_strata_count_is_a_multiple_of_the_assignment_period():
+    # 40 strata and a 300/500 split: the old assignment pattern repeated every 8 dealt items, so each
+    # stratum landed entirely in one split. This is the shape of the real data.
+    items = [{"id": f"{s}-{i}", "subject": f"s{s}", "level": "l"} for s in range(40) for i in range(50)]
+    dev, held = stratified_split(items, 300, 500, seed=42)
+    assert len(dev) == 300 and len(held) == 500
+    assert not {x["id"] for x in dev} & {x["id"] for x in held}
+    in_dev, in_held = Counter(x["subject"] for x in dev), Counter(x["subject"] for x in held)
+    assert len(in_dev) == len(in_held) == 40
+    assert all(7 <= v <= 8 for v in in_dev.values())
+    assert all(12 <= v <= 13 for v in in_held.values())
+
+
+def test_split_keeps_exact_sizes_with_uneven_and_tiny_strata():
+    items = [{"id": f"{s}-{i}", "subject": f"s{s}", "level": "l"} for s, n in enumerate((100, 9, 3, 2, 1)) for i in range(n)]
+    dev, held = stratified_split(items, 20, 30, seed=7)
+    assert len(dev) == 20 and len(held) == 30
+    assert not {x["id"] for x in dev} & {x["id"] for x in held}
+    for s in ("s0", "s1", "s2", "s3"):  # every stratum with at least two items reaches both splits
+        assert any(x["subject"] == s for x in dev) and any(x["subject"] == s for x in held)
+
+
+def test_split_is_independent_of_input_order_with_many_strata():
+    items = [{"id": f"{s}-{i}", "subject": f"s{s}", "level": "l"} for s in range(40) for i in range(50)]
+    first = stratified_split(items, 300, 500, seed=42)
+    second = stratified_split(list(reversed(items)), 300, 500, seed=42)
+    assert [x["id"] for x in first[1]] == [x["id"] for x in second[1]]
+
+
 def test_auroc_known_values_and_ties():
     assert auroc([0.9, 0.8, 0.1, 0.2], [1, 1, 0, 0]) == 1.0
     assert auroc([0.1, 0.2, 0.9, 0.8], [1, 1, 0, 0]) == 0.0

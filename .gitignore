@@ -12,12 +12,16 @@ __pycache__/
 .venv/
 venv/
 
-# Data whose license may not allow redistribution (question texts)
+# Question texts. The two demo questions in artifacts/demo_examples.json are the only exception,
+# tracked with attribution under the dataset's non-commercial license (see README).
 data/raw/
 data/processed/*.jsonl
 # Raw API responses (kept local; re-analysis runs from them offline)
 data/cache/
 data/cache_option_order/
+
+# Live demo spend (local; the experiment ledger stays separate)
+artifacts/demo_ledger.jsonl
 
 # OS / editor
 .DS_Store

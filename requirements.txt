@@ -4,5 +4,9 @@ numpy==2.5.3
 PyYAML==6.0.3
 python-dotenv==1.2.3
 pytest==9.1.1
+# The demo app
+streamlit==1.66.1
+altair==6.3.0
+pandas==3.1.0
 # Only needed by scripts/prepare_data.py to download ArabicMMLU from Hugging Face
 datasets==3.6.0

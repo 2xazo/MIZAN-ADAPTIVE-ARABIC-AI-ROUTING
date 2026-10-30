@@ -1,0 +1,9 @@
+{
+ "name": "Option-order perturbation test",
+ "seed": 20261030,
+ "algorithm": "random.Random(f'{seed}:{id}').shuffle, redrawn until the text order changes",
+ "n": 500,
+ "stayed_identical": 0,
+ "answer_letter_changed": 425,
+ "position_dependent_option": 42
+}

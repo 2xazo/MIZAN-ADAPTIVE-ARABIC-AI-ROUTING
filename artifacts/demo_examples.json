@@ -1,0 +1,153 @@
+{
+ "selection_rule": {
+  "high_confidence": "Among original held-out items accepted by Mizan and answered correctly by gpt-4o-mini, excluding religious subjects (Islamic Studies), the highest finite margin. An item with no competing option has no measured margin and is not eligible. Ties go to the lowest numeric item ID. The subject exclusion is a presentation choice and has no effect on any result.",
+  "lower_confidence": "Among original held-out items escalated by Mizan where gpt-4o-mini is wrong and gpt-4.1 is right, the lowest finite margin. If no such item exists, the lowest finite margin among all escalated items, with no claim of correction. Ties go to the lowest numeric item ID."
+ },
+ "correction_example_available": true,
+ "examples": {
+  "high_confidence": {
+   "role": "high_confidence",
+   "label": "Example from the held-out set",
+   "selection_rule": "Among original held-out items accepted by Mizan and answered correctly by gpt-4o-mini, excluding religious subjects (Islamic Studies), the highest finite margin. An item with no competing option has no measured margin and is not eligible. Ties go to the lowest numeric item ID. The subject exclusion is a presentation choice and has no effect on any result.",
+   "id": "6398",
+   "subject": "Arabic Language",
+   "level": "Primary",
+   "context": "",
+   "question": "ضد كلمة قديم:",
+   "options": [
+    "جديد",
+    "عليل",
+    "مبيت",
+    "بعيد"
+   ],
+   "correct_answer": "A",
+   "english": {
+    "translated_by": "Claude (AI), not reviewed by a professional translator",
+    "context": "",
+    "question": "The opposite of the word \"old\":",
+    "options": [
+     "New",
+     "Ailing",
+     "Overnight stay",
+     "Far"
+    ]
+   },
+   "gpt_4o_mini": {
+    "answer": "A",
+    "option_probabilities": [
+     {
+      "letter": "A",
+      "probability": 1.0000000002463059
+     },
+     {
+      "letter": "B",
+      "probability": 1.0603575991523846e-13
+     }
+    ],
+    "input_tokens": 67,
+    "output_tokens": 1,
+    "cost_usd": 1.065e-05,
+    "model_returned": "gpt-4o-mini-2024-07-18"
+   },
+   "margin": 29.875000000246306,
+   "threshold": 6.249999994711611,
+   "decision": "handled",
+   "reason": "The economical model's lead over the next option cleared the confidence threshold, so no stronger model was needed.",
+   "gpt_4_1": null,
+   "final_answer": "A",
+   "answered_correctly": true,
+   "stronger_model_corrected": false,
+   "cost_of_request_usd": 1.065e-05,
+   "cost_always_gpt_4_1_usd": 0.000142,
+   "license": "Question text from ArabicMMLU (Koto et al., Findings of ACL 2024, MBZUAI), licensed CC BY-NC-SA 4.0 per its GitHub repository and CC BY-NC 4.0 per its Hugging Face card. Non-commercial use only. English translations are adaptations made for this demo and are shared under CC BY-NC-SA 4.0."
+  },
+  "lower_confidence": {
+   "role": "lower_confidence",
+   "label": "Example from the held-out set",
+   "selection_rule": "Among original held-out items escalated by Mizan where gpt-4o-mini is wrong and gpt-4.1 is right, the lowest finite margin. If no such item exists, the lowest finite margin among all escalated items, with no claim of correction. Ties go to the lowest numeric item ID.",
+   "id": "7330",
+   "subject": "Computer Science",
+   "level": "Middle",
+   "context": "",
+   "question": "تعطل بعض البرامج عن العمل وعدم استجابتها عند الضغط على لوحة المفاتيح أو نقر الفأرة سببه:",
+   "options": [
+    "إصابة الحاسوب بفيروس",
+    "تحميل برنامج ثقيل",
+    "عدم إغلاق الحاسوب لمدة طويلة",
+    "لا شيء مما ذكر"
+   ],
+   "correct_answer": "A",
+   "english": {
+    "translated_by": "Claude (AI), not reviewed by a professional translator",
+    "context": "",
+    "question": "Some programs stopping working and not responding when the keyboard is pressed or the mouse is clicked is caused by:",
+    "options": [
+     "The computer being infected with a virus",
+     "Loading a heavy program",
+     "Not shutting down the computer for a long time",
+     "None of the above"
+    ]
+   },
+   "gpt_4o_mini": {
+    "answer": "B",
+    "option_probabilities": [
+     {
+      "letter": "A",
+      "probability": 0.4999892885937599
+     },
+     {
+      "letter": "B",
+      "probability": 0.4999892789554697
+     },
+     {
+      "letter": "C",
+      "probability": 1.7678371050773605e-05
+     },
+     {
+      "letter": "D",
+      "probability": 2.111380328714339e-06
+     }
+    ],
+    "input_tokens": 104,
+    "output_tokens": 1,
+    "cost_usd": 1.62e-05,
+    "model_returned": "gpt-4o-mini-2024-07-18"
+   },
+   "margin": -1.9276993556971433e-08,
+   "threshold": 6.249999994711611,
+   "decision": "escalated",
+   "reason": "The economical model's lead over the next option was too small to trust, so the request went to the stronger model.",
+   "gpt_4_1": {
+    "answer": "A",
+    "option_probabilities": [
+     {
+      "letter": "A",
+      "probability": 0.9840684248579662
+     },
+     {
+      "letter": "B",
+      "probability": 0.01590598611012298
+     },
+     {
+      "letter": "C",
+      "probability": 2.709774956284368e-05
+     },
+     {
+      "letter": "D",
+      "probability": 5.8691273579888834e-09
+     }
+    ],
+    "input_tokens": 104,
+    "output_tokens": 1,
+    "cost_usd": 0.000216,
+    "model_returned": "gpt-4.1-2025-04-14"
+   },
+   "final_answer": "A",
+   "answered_correctly": true,
+   "stronger_model_corrected": true,
+   "cost_of_request_usd": 0.0002322,
+   "cost_always_gpt_4_1_usd": 0.000216,
+   "license": "Question text from ArabicMMLU (Koto et al., Findings of ACL 2024, MBZUAI), licensed CC BY-NC-SA 4.0 per its GitHub repository and CC BY-NC 4.0 per its Hugging Face card. Non-commercial use only. English translations are adaptations made for this demo and are shared under CC BY-NC-SA 4.0."
+  }
+ }
+}

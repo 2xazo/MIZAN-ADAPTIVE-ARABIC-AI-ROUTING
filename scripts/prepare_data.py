@@ -1,10 +1,16 @@
-"""Download ArabicMMLU, normalize options to A-E, and build a fixed stratified Dev/Held-out split.
+"""Download ArabicMMLU, normalize options to A-E, and build the Dev/Held-out files.
 
     python scripts/prepare_data.py                 # from Hugging Face (needs `datasets`)
     python scripts/prepare_data.py --csv FILE.csv  # from a local export of the dataset
+    python scripts/prepare_data.py --new-split     # a NEW split from the fixed stratified_split
 
-Writes data/processed/{dev,heldout}.jsonl (git-ignored: contain question text) and
-artifacts/split_ids.json (IDs + rejection log only: safe to commit).
+By default the files are rebuilt from the IDs in artifacts/split_ids.json, the split every reported
+result uses. `--new-split` overwrites that manifest and is a new experiment: no recorded response
+or result applies to it.
+
+Writes data/processed/{dev,heldout}.jsonl (git-ignored: contain question text) and, with
+`--new-split` or when no manifest exists, artifacts/split_ids.json (IDs + rejection log only: safe
+to commit).
 """
 import _common  # noqa: F401
 import argparse
@@ -13,7 +19,7 @@ import json
 from collections import Counter
 
 from mizan.config import DEV_FILE, HELDOUT_FILE, SPLIT_IDS_FILE, experiment
-from mizan.data import normalize_row, stratified_split, write_jsonl
+from mizan.data import normalize_row, select_by_ids, stratified_split, write_jsonl
 
 
 def load_rows(args, cfg):
@@ -28,6 +34,7 @@ def load_rows(args, cfg):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--csv")
+    ap.add_argument("--new-split", action="store_true", help="new split, overwrites the recorded manifest")
     args = ap.parse_args()
     cfg = experiment()
 
@@ -45,6 +52,15 @@ def main():
             seen.add(it["id"])
             items.append(it)
     print(f"valid items: {len(items)}; rejected: {dict(rejects)}")
+
+    if SPLIT_IDS_FILE.exists() and not args.new_split:
+        with open(SPLIT_IDS_FILE, encoding="utf-8") as f:
+            manifest = json.load(f)
+        dev, held = select_by_ids(items, manifest["dev_ids"]), select_by_ids(items, manifest["heldout_ids"])
+        write_jsonl(DEV_FILE, dev)
+        write_jsonl(HELDOUT_FILE, held)
+        print(f"dev={len(dev)} heldout={len(held)} rebuilt from {SPLIT_IDS_FILE.name} (original split)")
+        return
 
     keys = [k.lower() for k in cfg["data"]["stratify_by"]]
     dev, held = stratified_split(items, cfg["data"]["dev_size"], cfg["data"]["heldout_size"],

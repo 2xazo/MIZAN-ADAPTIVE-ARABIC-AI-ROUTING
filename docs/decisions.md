@@ -176,3 +176,20 @@ Added by the executor, descriptive only: items with an option that refers to oth
 3. `python scripts/build_perturbation.py --i-have-go`.
 4. The same two `run_eval.py` commands with `--split perturbation`.
 5. Offline analysis of the perturbation test.
+
+## After the held-out run
+
+Added on 2026-10-30, after the preregistration and every result above. The SHA-256 recorded in `artifacts/heldout_preflight.json` is for this file at run commit `47ee70a`, before this section existed. Nothing in this section changes a result.
+
+- **All reported results use the original split, listed in `artifacts/split_ids.json`.** No data, cache or result was regenerated.
+- **What the original split is.** Dev and Held-out share 0 of 40 Subject x Level strata: held-out is disjoint by subject and level together. It is not disjoint by subject alone. 7 of its 15 subjects also appear in Dev at other levels, covering 220 of 500 items; the other 280 are in subjects absent from Dev. Results describe those 25 strata, equally weighted, not ArabicMMLU as a whole.
+- **Wording.** The coordinator's text called this split "subject-disjoint". Because 220 items are in subjects that also appear in Dev, the executor wrote "subject-by-level-disjoint" in the app and README, and reported the change. The sentence is the one constant `SPLIT_SENTENCE` in `src/mizan/story.py`.
+- **Split bug fixed, code only.** `stratified_split` dealt items across 40 strata and then assigned them with a pattern repeating every 8, so each stratum landed in one split. It now divides each stratum on its own; on the real data the fixed code shares 40 of 40 strata. Regression tests are in `tests/test_data_and_metrics.py`.
+- **`scripts/prepare_data.py` now rebuilds the original split from its IDs by default**, because the fix would otherwise silently produce different items. Checked in memory against the cached dataset: Dev and Held-out are identical to the files used for the runs. `--new-split` builds a new split, which is a new experiment.
+- **`scripts/analyze_heldout.py` is bound to the run.** It refuses to run once HEAD differs from the run commit. Offline recomputation uses `scripts/recompute_offline.py`, which runs the same analysis functions on `artifacts/heldout_per_item.json` (IDs and outcomes, no question text) and writes nothing.
+- **Demo examples use a fixed rule**, in `SELECTION_RULE` in `src/mizan/demo.py`. An item with no competing option has no measured margin, so it is not eligible as the highest margin. Translations are by Claude (AI), not reviewed by a professional translator.
+- **The replay uses the first 100 held-out items in run order**, a fixed rule. The app states that this sample differs from the full result.
+- **Live demo calls** use the frozen prompt, model settings, parsing and threshold, with a shorter timeout and fewer retries so a demo fails fast. Their spend goes to `artifacts/demo_ledger.jsonl` (git-ignored), capped at the $2 reserve, not to the experiment ledger.
+- **Dataset license.** The ArabicMMLU GitHub README states CC BY-NC-SA 4.0 and the Hugging Face card states CC BY-NC 4.0. Both allow non-commercial redistribution with attribution, so `artifacts/demo_examples.json` and `artifacts/demo_translations.json` are tracked under the stricter license. No other question text is tracked.
+- **Demo rule change, a presentation choice only.** On the coordinator's decision, the high-confidence demo example now excludes religious subjects (`RELIGIOUS_SUBJECTS` in `src/mizan/demo.py`, which is Islamic Studies among the held-out subjects). The chosen item moved from ID 235 to ID 6398. The lower-confidence rule is unchanged. This has no effect on routing, on the evaluation items or on any result: `artifacts/heldout_results.json` and `artifacts/heldout_per_item.json` are unchanged.
+- **Non-commercial entry and code license.** The coordinator confirmed the hackathon entry is non-commercial, so the demo questions and translations stay tracked under CC BY-NC-SA 4.0 with attribution. The code is under the MIT License (`LICENSE`), which does not cover dataset content.
