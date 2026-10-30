@@ -24,6 +24,9 @@ CORE_SENTENCE = "MIZAN lets an economical model answer first, and pays for the s
 CORE_SENTENCE_TECHNICAL = "MIZAN lets an economical model answer first, and pays for the stronger model only when the answer itself shows doubt or fails output validation."
 CONFIDENCE_CHECK = "The confidence check itself requires no additional model call."
 ROUTING_LAYER = "provider-independent routing layer for models that expose token-level confidence"
+HUMAIN_FIT = ("HUMAIN provides the Arabic model portfolio, sovereign infrastructure, and unified access layer. MIZAN adds the per-request decision: when is premium inference worth paying for?",
+              "Adaptive reasoning optimizes how one model thinks. MIZAN optimizes which model should think in the first place.",
+              "Today, MIZAN is validated on a publicly available reference pair. The next step is to evaluate the same confidence-aware routing through HUMAIN Node or HUMAIN IQ, subject to model access and confidence-signal availability.")
 COST_BASIS = "Measured from recorded input/output tokens using the fixed prices documented in the repository."
 SMALL, MID, LARGE = H.SMALL, H.MID, H.LARGE
 

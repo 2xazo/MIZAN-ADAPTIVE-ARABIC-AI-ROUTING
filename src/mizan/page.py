@@ -420,6 +420,7 @@ def tokens_for(res: dict, examples: dict | None) -> dict:
         "metric_value": e(h["metric_value"]), "metric_label": e(h["metric_label"]),
         "chip_points": f"{paired * 100:+.1f} pts vs always-economical", "chip_errors": f"{reduction * 100:.0f}% fewer errors among accepted answers", "chip_n": f"{o['n']} held-out questions",
         "tradeoff": f"{pct(z['accuracy'], 1)} MIZAN accuracy vs {pct(o['singles'][S.LARGE]['accuracy'], 1)} for the always-large baseline.",
+        "humain_portfolio": e(S.HUMAIN_FIT[0]), "humain_adaptive": e(S.HUMAIN_FIT[1]), "humain_next": e(S.HUMAIN_FIT[2]),
         "cost_basis": e(cost_basis(res)), "routing_layer": e(S.ROUTING_LAYER), "core_sentence": e(S.CORE_SENTENCE),
         "card_saving": f"{z['saving_vs_top'] * 100:.0f}%", "card_points": f"{paired * 100:+.1f}", "card_large": f"{abs(o['non_dominance']['paired'][S.LARGE]['accuracy_diff']['observed']) * 100:.1f}",
         "errors_big": f"{reduction * 100:.0f}%", "error_mizan": pct(m["selective_risk"]), "error_random": pct(m["random_acceptance_risk"]),

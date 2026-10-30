@@ -320,6 +320,15 @@ def test_wording_rules_hold_across_page_and_readme(page):
         assert not re.search(r"(?<!requires )no additional model call", low)
 
 
+def test_humain_fit_is_exact_and_claims_nothing_running_today(page):
+    text = visible(page)
+    assert "Built for Arabic AI at scale" in text
+    for sentence in ("HUMAIN provides the Arabic model portfolio, sovereign infrastructure, and unified access layer. MIZAN adds the per-request decision: when is premium inference worth paying for?",
+                     "Adaptive reasoning optimizes how one model thinks. MIZAN optimizes which model should think in the first place.",
+                     "Today, MIZAN is validated on a publicly available reference pair. The next step is to evaluate the same confidence-aware routing through HUMAIN Node or HUMAIN IQ, subject to model access and confidence-signal availability."):
+        assert sentence in text
+
+
 def test_exact_saving_and_model_names_stay_in_technical_sections(page):
     assert "66.45" in visible(page)
     assert "66.45" not in page_without(page, "technical")

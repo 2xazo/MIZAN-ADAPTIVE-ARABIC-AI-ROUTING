@@ -223,8 +223,9 @@
 
 <section class="s s-impact" id="impact">
   <div class="wrap">
-    <span class="label">Projection</span>
-    <h2>What this means at scale</h2>
+    <span class="label">Impact and HUMAIN fit</span>
+    <h2>Built for Arabic AI at scale</h2>
+    <div class="impact-grid">
     <div class="impact-card">
       <label for="impact-range">Number of similar tasks <output id="impact-n"></output></label>
       <input type="range" id="impact-range" min="0" max="300" step="1" value="200">
@@ -240,7 +241,12 @@
       <p class="impact-saving"><b>{{impact_saving}}</b> projected measured-cost reduction on this workload</p>
       <p class="fine">Projected from measured held-out routing rates.</p>
     </div>
-    <p class="statement">For Arabic AI moving from demos to daily services, model selection becomes an infrastructure decision.</p>
+    <div class="humain">
+      <p class="humain-lead">{{humain_portfolio}}</p>
+      <p>{{humain_adaptive}}</p>
+      <p>{{humain_next}}</p>
+    </div>
+    </div>
   </div>
 </section>
 

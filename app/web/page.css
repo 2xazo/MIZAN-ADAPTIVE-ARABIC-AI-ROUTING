@@ -228,7 +228,10 @@ h1 { font-size: clamp(2rem, 3.7vw, 3.15rem); font-weight: 700; line-height: 1.1;
 .check.fail { background: rgba(245,165,36,.14); color: var(--amber); border: 1px solid var(--amber); }
 
 /* Impact */
-.impact-card { background: var(--panel); border-radius: 18px; padding: 36px; }
+.impact-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+.impact-card { background: var(--panel); border-radius: 18px; padding: 32px; }
+.humain { display: grid; gap: 20px; padding-inline-start: 24px; border-inline-start: 3px solid var(--lime); color: var(--muted); font-size: 1.04rem; line-height: 1.55; }
+.humain-lead { color: var(--text); font-size: 1.22rem; font-weight: 500; line-height: 1.45; }
 .impact-card label { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; font-weight: 500; margin-bottom: 14px; }
 .impact-card output { font: 700 1.4rem var(--head); color: var(--text); font-variant-numeric: tabular-nums; }
 input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; border-radius: 4px; background: var(--bg-deep); outline-offset: 6px; cursor: pointer; }
@@ -257,7 +260,7 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
 @media (max-width: 1020px) {
   .hero-grid { grid-template-columns: 1fr; }
   .stage { max-width: 520px; }
-  .problem-layout { grid-template-columns: minmax(0, 1fr); }
+  .problem-layout, .impact-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 820px) {
   .wrap { padding: 0 16px; }
