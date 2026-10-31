@@ -222,81 +222,52 @@
     });
   }
 
-  /* Cost and accuracy chart. */
+  /* Cost and accuracy chart: MIZAN large and lime, the other four small and grey. */
   var chart = $("#chart");
   if (chart && D.chart && window.Plotly) {
     var C = D.chart;
-    var byKey = {};
-    C.points.forEach(function (p) { byKey[p.key] = p; });
-    var mizan = byKey.mizan, top = byKey[C.large], small = byKey[C.small];
-    var emphasized = false;
-    var touch = window.matchMedia("(hover: none)").matches;
-    var hintIdle = touch ? "Tap any point for details. Tap MIZAN to emphasize the callouts." : "Hover any point for details. Click MIZAN to emphasize the callouts.";
-    var hintOn = (touch ? "Callouts emphasized. Tap" : "Callouts emphasized. Click") + " MIZAN again to reset.";
-    $("#chart-hint").textContent = hintIdle;
-    var COLORS = { mizan: "#C6F23A", other: "#A9C4C6" };
+    var GREY = "#A9C4C6", LIME = "#C6F23A";
     var narrow = function () { return window.innerWidth < 640; };
+    var placement = {};
+    placement.mizan = { xanchor: "center", yshift: 38 };
+    placement.random = { xanchor: "left", xshift: 12, yshift: -22 };
+    placement[C.small] = { xanchor: "left", xshift: 12, yshift: -22 };
+    placement[C.mid] = { xanchor: "center", yshift: 32 };
+    placement[C.large] = { xanchor: "right", xshift: -14, yshift: 26 };
     var traces = function () {
-      var compact = narrow();
       return C.points.map(function (p) {
         var hero = p.key === "mizan";
-        var positions = { mizan: "top left", random: "bottom right" };
-        positions[C.small] = "bottom right";
-        positions[C.large] = "top left";
         return {
-          x: [p.x], y: [p.y], type: "scatter", mode: "markers+text", name: p.label,
-          text: [p.key === C.large && !compact ? p.label : p.short], textposition: positions[p.key] || "top left",
-          textfont: { family: "Inter, sans-serif", size: hero ? 16 : (compact ? 11 : 13), color: hero ? "#C6F23A" : "#A9C4C6" },
-          marker: { size: hero ? 20 : 11, color: hero ? COLORS.mizan : COLORS.other, opacity: hero ? 1 : 0.75, line: hero ? { color: "#FFFFFF", width: 2 } : { width: 0 } },
-          error_y: { type: "data", symmetric: false, array: [p.high - p.y], arrayminus: [p.y - p.low], color: hero ? "rgba(198,242,58,.55)" : "rgba(169,196,198,.35)", thickness: 1.5, width: 4 },
+          x: [p.x], y: [p.y], type: "scatter", mode: "markers", name: p.label,
+          marker: { size: hero ? 24 : 10, color: hero ? LIME : GREY, line: hero ? { color: "#FFFFFF", width: 2 } : { width: 0 } },
           hovertext: [p.tip], hovertemplate: "%{hovertext}<extra></extra>", cliponaxis: false
         };
       });
     };
     var layout = function () {
       var compact = narrow();
-      var gapX = (small.x + mizan.x) / 2 + 5;
-      var color = emphasized ? "#C6F23A" : "rgba(198,242,58,.6)";
-      var cyan = emphasized ? "#2EC4D6" : "rgba(46,196,214,.6)";
-      var w = emphasized ? 2.5 : 1.25;
-      var line = function (x0, y0, x1, y1, c, dash) {
-        return { type: "line", xref: "x", yref: "y", x0: x0, y0: y0, x1: x1, y1: y1, line: { color: c, width: w, dash: dash || "solid" }, layer: "below" };
-      };
-      var size = (compact ? 12 : 14) + (emphasized ? 2 : 0);
       return {
-        margin: { l: compact ? 44 : 60, r: compact ? 8 : 20, t: 12, b: compact ? 62 : 58 },
+        margin: { l: compact ? 48 : 64, r: compact ? 8 : 24, t: 16, b: compact ? 62 : 58 },
         paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", showlegend: false, hovermode: "closest", dragmode: false,
-        font: { family: "Inter, sans-serif", color: "#A9C4C6", size: 12 },
-        hoverlabel: { bgcolor: "#0B2E30", bordercolor: "#C6F23A", font: { family: "Inter, sans-serif", color: "#FFFFFF", size: 13 }, align: "left" },
-        xaxis: { title: { text: compact ? "Relative inference cost<br>(Always " + C.large + " = 100)" : "Relative inference cost (Always " + C.large + " = 100)", standoff: 12 }, range: [-3, 112], tickvals: [0, 20, 40, 60, 80, 100], showgrid: false, zeroline: false, linecolor: "#1C5A5F", fixedrange: true },
-        yaxis: { title: { text: "Accuracy", standoff: 8 }, range: [0.67, 0.875], tickformat: ".0%", dtick: 0.05, gridcolor: "rgba(28,90,95,.45)", zeroline: false, fixedrange: true },
-        shapes: [
-          line(mizan.x, mizan.y, top.x, mizan.y, cyan),
-          line(top.x, mizan.y, top.x, top.y, cyan, "dot"),
-          line(small.x, small.y, gapX, small.y, color, "dot"),
-          line(gapX, small.y, gapX, mizan.y, color),
-          line(gapX, mizan.y, mizan.x, mizan.y, color, "dot")
-        ],
-        annotations: [
-          { x: (mizan.x + top.x) / 2, y: mizan.y, yshift: 14, text: "<b>" + C.cost_callout + "</b>", showarrow: false, font: { size: size, color: "#2EC4D6" } },
-          { x: gapX + 1, y: small.y - 0.016, xanchor: "left", text: "<b>" + C.acc_callout + "</b>", showarrow: false, font: { size: size, color: "#C6F23A" } }
-        ]
+        font: { family: "Inter, 'Segoe UI', sans-serif", color: GREY, size: 13 },
+        hoverlabel: { bgcolor: "#0B2E30", bordercolor: LIME, font: { family: "Inter, 'Segoe UI', sans-serif", color: "#FFFFFF", size: 13 }, align: "left" },
+        xaxis: { title: { text: "Measured cost (always-large = 100)", standoff: 12 }, range: [0, 110], tickvals: [0, 20, 40, 60, 80, 100], showgrid: false, zeroline: false, linecolor: "#1C5A5F", fixedrange: true },
+        yaxis: { title: { text: "Accuracy", standoff: 8 }, range: [0.71, 0.86], tickformat: ".0%", dtick: 0.05, gridcolor: "rgba(28,90,95,.45)", zeroline: false, fixedrange: true },
+        annotations: C.points.map(function (p) {
+          var hero = p.key === "mizan";
+          var at = placement[p.key];
+          var second = p.sub ? '<br><span style="font-size:' + (compact ? 10 : 11) + 'px;color:#7E9EA1">' + p.sub + "</span>" : "";
+          return { x: p.x, y: p.y, xanchor: at.xanchor, xshift: at.xshift || 0, yshift: at.yshift, showarrow: false, align: at.xanchor,
+                   text: (hero ? "<b>" + p.label + "</b>" : p.label) + second,
+                   font: { size: hero ? 20 : (compact ? 11 : 13), color: hero ? LIME : GREY } };
+        })
       };
     };
     var config = { displayModeBar: false, responsive: true, scrollZoom: false, doubleClick: false };
-    var draw = function () { return window.Plotly.react(chart, traces(), layout(), config); };
-    window.Plotly.newPlot(chart, traces(), layout(), config).then(function () {
-      chart.on("plotly_click", function (ev) {
-        if (ev.points && ev.points[0] && ev.points[0].data.name === "MIZAN") {
-          emphasized = !emphasized;
-          $("#chart-hint").textContent = emphasized ? hintOn : hintIdle;
-          window.Plotly.relayout(chart, { shapes: layout().shapes, annotations: layout().annotations });
-        }
-      });
-    });
+    window.Plotly.newPlot(chart, traces(), layout(), config);
     var wasNarrow = narrow();
     window.addEventListener("resize", function () {
-      if (narrow() !== wasNarrow) { wasNarrow = narrow(); draw(); }
+      if (narrow() !== wasNarrow) { wasNarrow = narrow(); window.Plotly.react(chart, traces(), layout(), config); }
     });
   }
 

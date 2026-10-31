@@ -389,24 +389,22 @@ def replay_data(res: dict, per_item: dict) -> dict:
 
 
 def chart_data(res: dict) -> dict:
+    """Five points read from the results file. X is measured cost with the always-large baseline at 100."""
     o = res["original"]
     top = o["singles"][S.LARGE]["total_cost_usd"]
 
-    def point(key, label, short, acc, cost, low, high, range_label, share=None):
+    def point(key, label, sub, accuracy, cost):
         rel = cost / top * 100
-        tip = f"<b>{label}</b><br>Accuracy {acc * 100:.1f}% ({range_label} {ci_pct([low, high], 1)})<br>Relative cost {rel:.2f}"
-        if share is not None:
-            tip += f"<br>Handled economically {pct(share, 1)}"
-        return {"key": key, "label": label, "short": short, "x": rel, "y": acc, "low": low, "high": high, "tip": tip}
-    points = [point(m, f"Always {m}", m, v["accuracy"], v["total_cost_usd"], *v["accuracy_ci95"], "95% CI") for m, v in o["singles"].items()]
-    share = o["mechanism"]["coverage"]
-    r = o["random"]
-    points.append(point("random", "Matched random", "Matched random", r["accuracy_mean"], r["total_cost_usd_mean"], *r["accuracy_range95"], "95% seed range", share))
-    z = o["mizan"]
-    points.append(point("mizan", "MIZAN", "MIZAN", z["accuracy"], z["total_cost_usd"], *z["accuracy_ci95"], "95% CI", share))
-    paired = o["non_dominance"]["paired"][S.SMALL]["accuracy_diff"]["observed"]
-    return {"points": points, "cost_callout": f"{z['saving_vs_top'] * 100:.0f}% lower cost", "acc_callout": f"{paired * 100:+.1f} accuracy points",
-            "small": S.SMALL, "large": S.LARGE}
+        name = f"{label}<br>{sub}" if sub else label
+        return {"key": key, "label": label, "sub": sub, "x": rel, "y": accuracy,
+                "tip": f"<b>{name}</b><br>Accuracy {accuracy * 100:.1f}%<br>Measured cost {rel:.1f} (always-large = 100)"}
+    single = o["singles"]
+    return {"points": [point(S.SMALL, "Always-economical", f"Economical model ({S.SMALL})", single[S.SMALL]["accuracy"], single[S.SMALL]["total_cost_usd"]),
+                       point(S.MID, "Mid-size standalone", f"Mid-size model ({S.MID})", single[S.MID]["accuracy"], single[S.MID]["total_cost_usd"]),
+                       point("mizan", "MIZAN", "", o["mizan"]["accuracy"], o["mizan"]["total_cost_usd"]),
+                       point("random", "Matched random", "", o["random"]["accuracy_mean"], o["random"]["total_cost_usd_mean"]),
+                       point(S.LARGE, "Always-large", f"High-capability model ({S.LARGE})", single[S.LARGE]["accuracy"], single[S.LARGE]["total_cost_usd"])],
+            "small": S.SMALL, "mid": S.MID, "large": S.LARGE}
 
 
 def scale_cards(res: dict) -> list[dict]:

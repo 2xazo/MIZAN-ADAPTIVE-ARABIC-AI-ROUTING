@@ -398,17 +398,18 @@ def test_readme_states_authorship_exactly():
     assert line in (ROOT / "README.md").read_text(encoding="utf-8")
 
 
-def test_chart_uses_relative_cost_and_labels_each_interval(res):
+def test_chart_has_five_points_read_from_the_results(res):
     c = P.chart_data(res)
     by = {p["key"]: p for p in c["points"]}
-    assert set(by) == {"gpt-4o-mini", "gpt-4.1-mini", "gpt-4.1", "random", "mizan"}
-    assert by["gpt-4.1"]["x"] == 100
-    assert math.isclose(by["mizan"]["x"], (1 - res["original"]["mizan"]["saving_vs_top"]) * 100)
-    assert by["mizan"]["low"] == res["original"]["mizan"]["accuracy_ci95"][0]
-    assert "95% CI" in by["mizan"]["tip"] and "Handled economically 74.6%" in by["mizan"]["tip"] and "Relative cost 33.55" in by["mizan"]["tip"]
-    assert "95% seed range" in by["random"]["tip"]
-    assert (c["cost_callout"], c["acc_callout"]) == ("66% lower cost", "+5.4 accuracy points")
-    assert all("$" not in p["tip"] for p in c["points"])
+    o = res["original"]
+    assert [p["label"] for p in c["points"]] == ["Always-economical", "Mid-size standalone", "MIZAN", "Matched random", "Always-large"]
+    assert by["gpt-4.1"]["sub"] == "High-capability model (gpt-4.1)" and by["gpt-4o-mini"]["sub"] == "Economical model (gpt-4o-mini)" and by["gpt-4.1-mini"]["sub"] == "Mid-size model (gpt-4.1-mini)"
+    assert by["gpt-4.1"]["x"] == 100 and by["gpt-4.1"]["y"] == o["singles"]["gpt-4.1"]["accuracy"]
+    assert math.isclose(by["mizan"]["x"], (1 - o["mizan"]["saving_vs_top"]) * 100) and by["mizan"]["y"] == o["mizan"]["accuracy"]
+    assert by["random"]["y"] == o["random"]["accuracy_mean"]
+    assert math.isclose(by["random"]["x"], o["random"]["total_cost_usd_mean"] / o["singles"]["gpt-4.1"]["total_cost_usd"] * 100)
+    assert by["gpt-4o-mini"]["y"] == o["singles"]["gpt-4o-mini"]["accuracy"] and by["gpt-4.1-mini"]["y"] == o["singles"]["gpt-4.1-mini"]["accuracy"]
+    assert all("$" not in p["tip"] and "CI" not in p["tip"] for p in c["points"])
 
 
 def test_robustness_order_is_the_recorded_shuffle(res, examples):
