@@ -126,6 +126,11 @@ def validate_free_input(question: str, options: list[str], known: str = "") -> t
 
 LIVE_NO_KEY = "Live mode is unavailable because OPENAI_API_KEY is not configured. The recorded examples remain available."
 LIVE_ACCEPTED, LIVE_ESCALATED = "Accepted — no second model call", "Escalated — high-capability model called"
+LIVE_BUTTON = "Try your own question — Live"
+LIVE_FORM_NOTE = "Examples only preload the inputs. Routing is decided live."
+LIVE_RESULT_NOTE = "Live product demonstration — not part of the reported held-out evaluation."
+SAUDI_EXAMPLE = {"question": "ما عاصمة المملكة العربية السعودية؟",
+                 "options": ["الرياض", "جدة", "مكة المكرمة", "الدمام"], "correct_answer": "A"}
 
 
 def live_answer(label: str, letter: str | None, options: list[str], tone: str, missing: str = "No valid answer letter was returned.") -> str:
@@ -158,8 +163,7 @@ def live_technical(r: dict) -> str:
     return (f'<div class="live-tech"><h5>Technical details</h5>{table(["Measure", "Value"], signal)}'
             f'<h5>Calls</h5>{table(["Sent as", "Model returned", "Input tokens", "Output tokens", "Cost", "Latency"], calls)}'
             f'<h5>Estimated cost per route</h5>{table(["Route", "Cost"], routes)}'
-            f'<p class="live-fine">Costs use config/prices.yaml, verified on {e(r["prices_verified_on"])}. Latency was measured for this run only and is not an evaluation result. '
-            'This run is not part of the held-out results.</p></div>')
+            f'<p class="live-fine">Costs use config/prices.yaml, verified on {e(r["prices_verified_on"])}. Latency was measured for this run only and is not an evaluation result.</p></div>')
 
 
 def live_result(run: dict) -> str:
@@ -182,7 +186,7 @@ def live_result(run: dict) -> str:
     decision = f'<span class="badge escalated">{LIVE_ESCALATED}</span>' if escalated else f'<span class="badge handled">{LIVE_ACCEPTED}</span>'
     return (f'<div class="live-result"><div class="live-head"><span class="badge live">LIVE API RUN</span>{decision}</div>'
             f'<div class="live-grid"><div class="question"><div class="tag">Your question</div><p class="ar q" dir="auto">{e(run["question"])}</p><ol class="opts ar" dir="auto">{items}</ol></div>'
-            f'<div class="decision {"escalated" if escalated else "handled"}"><div class="answers">{answers}</div>{outcome}</div></div>{live_technical(r)}</div>')
+            f'<div class="decision {"escalated" if escalated else "handled"}"><div class="answers">{answers}</div>{outcome}</div></div>{live_technical(r)}<p class="live-fine">{e(LIVE_RESULT_NOTE)}</p></div>')
 
 
 # ---------------------------------------------------------------- the result card, shared by demo and free input
@@ -599,7 +603,7 @@ def tokens_for(res: dict, examples: dict | None) -> dict:
         "tech_models": tech_models(res), "tech_repro": tech_repro(res, examples),
         "logo_mark": LOGO_MARK, "logo_png": base64.b64encode(LOGO.read_bytes()).decode(),
         "footer_github": f'<a class="flink" href="{e(url)}" target="_blank" rel="noopener">GitHub</a>' if url else "",
-        "live_slot": "",
+        "live_link": "",
     }
     return {**tokens, **metric_details(res), **demo_panels(examples)}
 
@@ -614,10 +618,11 @@ def _document(body_file: str, tokens: dict, data: dict, libraries: str = "") -> 
 
 
 def build_page(res: dict, per_item: dict, examples: dict | None, live: bool = False) -> str:
-    """`live` reserves the space in the Demo section that the Streamlit live form is pinned over."""
-    data = {"scale": scale_cards(res), "replay": replay_data(res, per_item), "chart": chart_data(res), "robust": robustness_data(res, examples),
+    """`live` adds the Demo section's link to the Live Lab, which is a Streamlit section after this iframe."""
+    data ={"scale": scale_cards(res), "replay": replay_data(res, per_item), "chart": chart_data(res), "robust": robustness_data(res, examples),
             "impact": {"handled": res["original"]["mechanism"]["coverage"]}}
-    tokens = {**tokens_for(res, examples), "live_slot": '<div id="live-slot"></div>' if live else ""}
+    link = f'<div class="live-go"><a class="btn primary" href="#live" data-go="live">{LIVE_BUTTON}</a></div>'
+    tokens = {**tokens_for(res, examples), "live_link": link if live else ""}
     return _document("page.html", tokens, data, f"<script>{PLOTLY.read_text(encoding='utf-8')}</script>")
 
 

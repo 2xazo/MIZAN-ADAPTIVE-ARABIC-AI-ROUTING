@@ -17,8 +17,7 @@ iframe { display: block; border: 0; width: 100%; }
 .mz-gh { padding: 8px 16px; border: 1px solid var(--teal); border-radius: 9px; color: var(--text) !important; text-decoration: none !important; font-size: .88rem; font-weight: 600; white-space: nowrap; }
 .mz-gh:hover { border-color: var(--lime); }
 
-/* Pinned by page.js over the slot in the Demo section. If the script cannot reach it, it falls back to the end of the page. */
-.st-key-live { position: absolute !important; top: var(--live-top, auto); left: var(--live-left, 0); width: var(--live-width, 100%) !important; z-index: 2; gap: 14px !important; color: var(--text); }
+.st-key-live { background: var(--bg); padding: 104px max(32px, calc((100% - 1296px) / 2)) !important; border-top: 1px solid rgba(0,102,135,.7); gap: 14px !important; color: var(--text); }
 .st-key-live [data-testid="stVerticalBlock"] { gap: 14px; }
 .st-key-live label, .st-key-live button, .st-key-live button p, .st-key-live label p { font-family: var(--body) !important; }
 .mz-try-label { display: inline-block; color: var(--teal); font: 600 .82rem var(--body); letter-spacing: .08em; text-transform: uppercase; }
@@ -69,6 +68,7 @@ iframe { display: block; border: 0; width: 100%; }
   .mz-gh { margin-left: auto; padding: 5px 12px; font-size: .8rem; }
   .mz-head nav { order: 3; flex: 1 1 100%; margin: 0; gap: 13px; justify-content: space-between; overflow-x: auto; scrollbar-width: none; }
   .mz-head nav a { font-size: .79rem; line-height: 28px; }
+  .st-key-live { padding: 68px 16px !important; }
   .live-grid { grid-template-columns: minmax(0, 1fr); }
   .st-key-live [data-testid="stForm"] { padding: 16px; }
 }

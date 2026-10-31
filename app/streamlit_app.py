@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import streamlit as st  # noqa: E402
 import streamlit.components.v1 as components  # noqa: E402
+from streamlit.errors import StreamlitAPIException  # noqa: E402
 
 from mizan import demo as D, page as P, story as S  # noqa: E402
 from mizan.config import experiment, prices  # noqa: E402
@@ -50,17 +51,13 @@ def load_documents(version: float, live: bool) -> dict:
 
 
 def load_example(example: dict) -> None:
-    """Fills the form from the recorded high-confidence example. Never calls a model."""
+    """Fills the form, known correct option included. Never calls a model."""
     state = st.session_state
     state["try_q"] = example["question"]
     for key, option in zip(FIELDS[1:], example["options"] + ["", ""]):
         state[key] = option
-    state["try_known"] = ""
+    state["try_known"] = example["correct_answer"]
     state.pop("live", None)
-
-
-def toggle_form() -> None:
-    st.session_state["live_open"] = not st.session_state.get("live_open", False)
 
 
 def start_run() -> None:
@@ -83,17 +80,26 @@ def run_live(question: str, options: list[str], known: str, threshold: float) ->
         return {"errors": [f"The live run failed. {D.failure_message(err)} Nothing was routed. The recorded examples remain available."]}
 
 
+def rerun_live() -> None:
+    """Redraws only the fragment. A full run of the script has no fragment to redraw, so it reruns the app."""
+    try:
+        st.rerun(scope="fragment")
+    except StreamlitAPIException:
+        st.rerun()
+
+
+@st.fragment
 def live_section(docs: dict) -> None:
+    """Its own section after the page iframe. As a fragment, nothing here reruns the page or redraws the iframe."""
     state = st.session_state
     examples = docs["examples"]
     running = state.get("live_running", False)
+    has_key = D.has_live_key()
     with st.container(key="live"):
-        st.button("Try your own question — Live", key="btn_live", type="primary", on_click=toggle_form, disabled=running)
-        if not state.get("live_open"):
-            return
-        st.html('<div class="mz-try-notes"><p>Prototype evaluated on Arabic multiple-choice tasks.</p>'
-                '<p>Do not enter sensitive or personal information.</p></div>')
-        has_key = D.has_live_key()
+        st.html(f'<div><span class="mz-try-label">Live Lab</span><div class="mz-try-title">{P.e(P.LIVE_BUTTON)}</div>'
+                '<div class="mz-try-notes"><p>Prototype evaluated on Arabic multiple-choice tasks.</p>'
+                '<p>Do not enter sensitive or personal information.</p>'
+                '<p>Your text is sent to OpenAI when you run it. The threshold was set on multiple-choice exam questions, so other kinds of text are outside what was measured.</p></div></div>')
         if not has_key:
             st.html(f'<p class="mz-info" role="status">{P.e(P.LIVE_NO_KEY)}</p>')
         with st.form("live_form", border=False):
@@ -107,16 +113,18 @@ def live_section(docs: dict) -> None:
                     else:
                         known = column.selectbox("Known correct option (optional)", ["", *P.LETTERS], key="try_known",
                                                  format_func=lambda x: x or "Not provided")
-            run_col, load_col, _ = st.columns([1.2, 1, 2])
+            run_col, saudi_col, hard_col = st.columns(3)
             run_col.form_submit_button("Run MIZAN Live", type="primary", width="stretch", key="btn_run", on_click=start_run, disabled=running or not has_key)
-            load_col.form_submit_button("Load sample question", width="stretch", key="btn_load", disabled=running or not examples,
-                                        on_click=load_example, args=(examples["examples"]["high_confidence"],) if examples else None)
+            saudi_col.form_submit_button("Load Saudi example", width="stretch", key="btn_saudi", disabled=running, on_click=load_example, args=(P.SAUDI_EXAMPLE,))
+            hard_col.form_submit_button("Load challenging example", width="stretch", key="btn_challenging", disabled=running or not examples,
+                                        on_click=load_example, args=(examples["examples"]["lower_confidence"],) if examples else None)
+        st.html(f'<p class="mz-try-notes" style="font-size:.84rem">{P.e(P.LIVE_FORM_NOTE)}</p>')
         if running:
             try:
                 state["live"] = run_live(question, options, known, docs["res"]["original"]["threshold"])
             finally:  # also when another click interrupts the run, so the button never stays disabled
                 state["live_running"] = False
-            st.rerun()
+            rerun_live()
         live = state.get("live")
         if live and live.get("errors"):
             st.html('<ul class="mz-errors" role="alert">' + "".join(f"<li>{P.e(x)}</li>" for x in live["errors"]) + "</ul>")
@@ -124,7 +132,6 @@ def live_section(docs: dict) -> None:
             st.html(f'<p class="mz-info" role="status">{P.e(live["info"])}</p>')
         elif live:
             st.html(P.live_result(live))
-        st.html('<p class="mz-try-notes" style="font-size:.84rem">Your text is sent to OpenAI when you run it. The threshold was set on multiple-choice exam questions, so other kinds of text are outside what was measured.</p>')
 
 
 def main() -> None:

@@ -683,7 +683,7 @@ def lab_form(at, question="q", options=None, known=None):
 
 @pytest.fixture
 def live(monkeypatch, isolated_ledger):
-    """The opened live form with a configured key and a replaced network. A test can change the fake's responses."""
+    """The live form with a configured key and a replaced network. A test can change the fake's responses."""
     from streamlit.testing.v1 import AppTest
     monkeypatch.delenv("MIZAN_DISABLE_LIVE", raising=False)
     monkeypatch.setenv("OPENAI_API_KEY", SECRET)
@@ -692,8 +692,6 @@ def live(monkeypatch, isolated_ledger):
     monkeypatch.setattr(client, "chat", fake)
     at = AppTest.from_file(str(ROOT / "app" / "streamlit_app.py"), default_timeout=60).run()
     assert not at.exception and fake.calls == []  # opening the page never calls a model
-    at.button(key="btn_live").click().run()
-    assert not at.exception and fake.calls == []  # neither does opening the form
     at.fake = fake
     return at
 
@@ -712,19 +710,27 @@ def small_then_large_fails(error):
     return chat
 
 
-def test_live_button_is_in_the_demo_section_only_when_enabled(lab):
+def test_live_lab_is_a_section_after_the_page_and_the_demo_button_only_navigates(lab):
     frame = lab.get("iframe")[0].proto.srcdoc
-    assert frame.index('id="panel-low"') < frame.index('id="live-slot"') < frame.index('id="results"')
-    assert lab.button(key="btn_live").label == "Try your own question — Live"
+    link = f'<a class="btn primary" href="#live" data-go="live">{P.LIVE_BUTTON}</a>'
+    assert frame.index('id="panel-low"') < frame.index(link) < frame.index('id="results"')
     assert not any("Live" in label for _, label in P.NAV)
-    assert not list(lab.text_input)  # the form appears only after the button is pressed
-    lab.button(key="btn_live").click().run()
-    assert lab.button(key="btn_run").label == "Run MIZAN Live" and lab.button(key="btn_load").label == "Load sample question"
+    assert lab.button(key="btn_run").label == "Run MIZAN Live"
+    assert lab.button(key="btn_saudi").label == "Load Saudi example" and lab.button(key="btn_challenging").label == "Load challenging example"
     assert lab.selectbox(key="try_known").value == ""
+    assert P.LIVE_FORM_NOTE == "Examples only preload the inputs. Routing is decided live." and P.LIVE_FORM_NOTE in form_text(lab)
 
 
-def test_live_slot_is_absent_when_the_lab_is_off(app):
-    assert 'id="live-slot"' not in app.get("iframe")[0].proto.srcdoc
+def test_live_lab_has_no_overlay_and_is_a_fragment():
+    source = (ROOT / "app" / "streamlit_app.py").read_text(encoding="utf-8")
+    assert "@st.fragment\ndef live_section" in source
+    for name in ("page.js", "page.css", "shell.css", "page.html"):
+        text = (P.WEB / name).read_text(encoding="utf-8")
+        assert "live-slot" not in text and "--live-top" not in text
+
+
+def test_live_link_is_absent_when_the_lab_is_off(app):
+    assert 'data-go="live"' not in app.get("iframe")[0].proto.srcdoc
 
 
 @pytest.mark.parametrize("question,options,message", [
@@ -741,15 +747,33 @@ def test_live_incomplete_input_makes_no_call(live, question, options, message):
     assert not live.button(key="btn_run").disabled
 
 
-@pytest.mark.skipif(not S.EXAMPLES.exists(), reason="demo_examples.json is built locally")
-def test_live_load_sample_only_fills_the_form(live):
-    live.button(key="btn_load").click().run()
+def test_live_saudi_example_only_fills_the_form(live):
+    live.button(key="btn_saudi").click().run()
     assert not live.exception and live.fake.calls == []
-    high = S.load_json(S.EXAMPLES)["examples"]["high_confidence"]
-    assert live.text_area(key="try_q").value == high["question"]
-    assert [live.text_input(key=f"try_{k}").value for k in "abcd"] == high["options"]
-    assert live.text_input(key="try_e").value == "" and live.selectbox(key="try_known").value == ""
-    assert "LIVE API RUN" not in page_text(live)
+    assert live.text_area(key="try_q").value == "\u0645\u0627 \u0639\u0627\u0635\u0645\u0629 \u0627\u0644\u0645\u0645\u0644\u0643\u0629 \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629\u061f"
+    assert [live.text_input(key=f"try_{k}").value for k in "abcde"] == ["\u0627\u0644\u0631\u064a\u0627\u0636", "\u062c\u062f\u0629", "\u0645\u0643\u0629 \u0627\u0644\u0645\u0643\u0631\u0645\u0629", "\u0627\u0644\u062f\u0645\u0627\u0645", ""]
+    assert live.selectbox(key="try_known").value == "A"
+    assert "LIVE API RUN" not in form_text(live)
+
+
+@pytest.mark.skipif(not S.EXAMPLES.exists(), reason="demo_examples.json is built locally")
+def test_live_challenging_example_is_the_recorded_item_and_only_fills_the_form(live):
+    live.button(key="btn_challenging").click().run()
+    assert not live.exception and live.fake.calls == []
+    low = S.load_json(S.EXAMPLES)["examples"]["lower_confidence"]
+    assert str(low["id"]) == "7330" and low["correct_answer"] == "A"
+    assert live.text_area(key="try_q").value == low["question"]
+    assert [live.text_input(key=f"try_{k}").value for k in "abcd"] == low["options"]
+    assert live.selectbox(key="try_known").value == "A"
+    assert "LIVE API RUN" not in form_text(live)
+
+
+def test_live_lab_never_offers_the_old_sample_question(live):
+    old = "\u0636\u062f \u0643\u0644\u0645\u0629 \u0642\u062f\u064a\u0645"
+    for button in ("btn_saudi", "btn_challenging"):
+        live.button(key=button).click().run()
+        assert live.text_area(key="try_q").value != old and old not in form_text(live)
+    assert old not in (ROOT / "app" / "streamlit_app.py").read_text(encoding="utf-8")
 
 
 def test_live_confident_answer_is_accepted_with_no_second_call(live):
@@ -763,6 +787,8 @@ def test_live_confident_answer_is_accepted_with_no_second_call(live):
     text = page_text(live)
     assert "LIVE API RUN" in text and P.LIVE_ACCEPTED in text and P.LIVE_ESCALATED not in text
     assert repr(THRESHOLD) in text and "gpt-4o-mini" in text and "Latency was measured for this run only" in text
+    assert "Live product demonstration \u2014 not part of the reported held-out evaluation." in form_text(live)
+    assert form_text(live).index(P.LIVE_FORM_NOTE) < form_text(live).index("LIVE API RUN")  # the result comes under the form
     assert "Correct<" not in form_text(live) and "Incorrect<" not in form_text(live)  # no known option, so no verdict
     assert not live.button(key="btn_run").disabled  # usable again after the run
 
@@ -830,7 +856,6 @@ def test_live_missing_key_blocks_the_run_and_says_why(monkeypatch):
     monkeypatch.setenv("MIZAN_LIVE_LAB", "1")
     monkeypatch.setattr(client, "chat", lambda *a, **k: pytest.fail("the app called the network"))
     at = AppTest.from_file(str(ROOT / "app" / "streamlit_app.py"), default_timeout=60).run()
-    at.button(key="btn_live").click().run()
     assert not at.exception
     assert "Live mode is unavailable because OPENAI_API_KEY is not configured. The recorded examples remain available." in page_text(at)
     assert at.button(key="btn_run").disabled
