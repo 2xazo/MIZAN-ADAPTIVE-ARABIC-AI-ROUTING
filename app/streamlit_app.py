@@ -46,17 +46,27 @@ def load_documents(version: float, live: bool) -> dict:
     S.verify_approved_values(res)
     examples = S.load_json(S.EXAMPLES) if S.EXAMPLES.exists() else None
     per_item = S.load_json(S.PER_ITEM)
-    return {"res": res, "examples": examples, "css": P.shell_css(), "header": P.build_header(),
+    return {"res": res, "css": P.shell_css(), "header": P.build_header(),
             "page": P.build_page(res, per_item, examples, live)}
 
 
-def load_example(example: dict) -> None:
-    """Fills the form, known correct option included. Never calls a model."""
+def load_sample() -> None:
+    """Fills the form with the chosen sample, known correct option included. Never calls a model."""
     state = st.session_state
-    state["try_q"] = example["question"]
-    for key, option in zip(FIELDS[1:], example["options"] + ["", ""]):
+    sample = P.LIVE_SAMPLES[state["try_sample"]]
+    state["try_q"] = sample["question"]
+    for key, option in zip(FIELDS[1:], sample["options"] + ["", ""]):
         state[key] = option
-    state["try_known"] = example["correct_answer"]
+    state["try_known"] = sample["correct_answer"]
+    state.pop("live", None)
+
+
+def clear_form() -> None:
+    """Empties the form and the previous result. Never calls a model."""
+    state = st.session_state
+    for key in FIELDS:
+        state[key] = ""
+    state["try_known"] = ""
     state.pop("live", None)
 
 
@@ -92,7 +102,6 @@ def rerun_live() -> None:
 def live_section(docs: dict) -> None:
     """Its own section after the page iframe. As a fragment, nothing here reruns the page or redraws the iframe."""
     state = st.session_state
-    examples = docs["examples"]
     running = state.get("live_running", False)
     has_key = D.has_live_key()
     with st.container(key="live"):
@@ -102,7 +111,10 @@ def live_section(docs: dict) -> None:
                 '<p>Your text is sent to OpenAI when you run it. The threshold was set on multiple-choice exam questions, so other kinds of text are outside what was measured.</p></div></div>')
         if not has_key:
             st.html(f'<p class="mz-info" role="status">{P.e(P.LIVE_NO_KEY)}</p>')
-        with st.form("live_form", border=False):
+        with st.form("live_form", border=False, enter_to_submit=False):  # Enter would otherwise press the paid Run button
+            sample_col, load_col = st.columns([3, 1], vertical_alignment="bottom")
+            sample_col.selectbox("Load a sample", list(P.LIVE_SAMPLES), key="try_sample")
+            load_col.form_submit_button("Load", width="stretch", key="btn_load", disabled=running, on_click=load_sample)
             question = st.text_area("Question", key="try_q", height=96, max_chars=P.MAX_QUESTION_CHARS)
             options = []  # one row of columns per pair, so the fields keep A to E order when stacked on a phone
             for pair in (("A", "B"), ("C", "D"), ("E (optional)", None)):
@@ -113,11 +125,9 @@ def live_section(docs: dict) -> None:
                     else:
                         known = column.selectbox("Known correct option (optional)", ["", *P.LETTERS], key="try_known",
                                                  format_func=lambda x: x or "Not provided")
-            run_col, saudi_col, hard_col = st.columns(3)
+            run_col, clear_col = st.columns([3, 1])
             run_col.form_submit_button("Run MIZAN Live", type="primary", width="stretch", key="btn_run", on_click=start_run, disabled=running or not has_key)
-            saudi_col.form_submit_button("Load Saudi example", width="stretch", key="btn_saudi", disabled=running, on_click=load_example, args=(P.SAUDI_EXAMPLE,))
-            hard_col.form_submit_button("Load challenging example", width="stretch", key="btn_challenging", disabled=running or not examples,
-                                        on_click=load_example, args=(examples["examples"]["lower_confidence"],) if examples else None)
+            clear_col.form_submit_button("Clear", width="stretch", key="btn_clear", disabled=running, on_click=clear_form)
         st.html(f'<p class="mz-try-notes" style="font-size:.84rem">{P.e(P.LIVE_FORM_NOTE)}</p>')
         if running:
             try:

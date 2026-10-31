@@ -716,7 +716,8 @@ def test_live_lab_is_a_section_after_the_page_and_the_demo_button_only_navigates
     assert frame.index('id="panel-low"') < frame.index(link) < frame.index('id="results"')
     assert not any("Live" in label for _, label in P.NAV)
     assert lab.button(key="btn_run").label == "Run MIZAN Live"
-    assert lab.button(key="btn_saudi").label == "Load Saudi example" and lab.button(key="btn_challenging").label == "Load challenging example"
+    assert lab.button(key="btn_load").label == "Load" and lab.button(key="btn_clear").label == "Clear"
+    assert lab.selectbox(key="try_sample").label == "Load a sample" and list(lab.selectbox(key="try_sample").options) == list(P.LIVE_SAMPLES)
     assert lab.selectbox(key="try_known").value == ""
     assert P.LIVE_FORM_NOTE == "Examples only preload the inputs. Routing is decided live." and P.LIVE_FORM_NOTE in form_text(lab)
 
@@ -747,33 +748,85 @@ def test_live_incomplete_input_makes_no_call(live, question, options, message):
     assert not live.button(key="btn_run").disabled
 
 
-def test_live_saudi_example_only_fills_the_form(live):
-    live.button(key="btn_saudi").click().run()
+def load_sample(at, label):
+    at.selectbox(key="try_sample").set_value(label)
+    at.button(key="btn_load").click().run()
+
+
+def form_values(at) -> list[str]:
+    return [at.text_area(key="try_q").value] + [at.text_input(key=f"try_{k}").value for k in "abcde"]
+
+
+def test_live_samples_are_the_approved_three_and_not_recorded_items():
+    assert [(s["question"], s["options"], s["correct_answer"]) for s in P.LIVE_SAMPLES.values()] == [
+        ("\u0645\u0627 \u0639\u0627\u0635\u0645\u0629 \u0627\u0644\u0645\u0645\u0644\u0643\u0629 \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629\u061f",
+         ["\u0627\u0644\u0631\u064a\u0627\u0636", "\u062c\u062f\u0629", "\u0645\u0643\u0629 \u0627\u0644\u0645\u0643\u0631\u0645\u0629", "\u0627\u0644\u062f\u0645\u0627\u0645"], "A"),
+        ("\u0645\u0627 \u0625\u0639\u0631\u0627\u0628 \u0643\u0644\u0645\u0629 \"\u0637\u0627\u0644\u0628\u064b\u0627\" \u0641\u064a \u062c\u0645\u0644\u0629: \"\u0645\u0627 \u0631\u0623\u064a\u062a\u064f \u0623\u062d\u062f\u064b\u0627 \u0637\u0627\u0644\u0628\u064b\u0627 \u0644\u0644\u0639\u0644\u0645 \u0645\u062b\u0644\u0647\"\u061f",
+         ["\u0646\u0639\u062a \u0645\u0646\u0635\u0648\u0628", "\u062d\u0627\u0644 \u0645\u0646\u0635\u0648\u0628\u0629", "\u0645\u0641\u0639\u0648\u0644 \u0628\u0647 \u062b\u0627\u0646\u064d", "\u062a\u0645\u064a\u064a\u0632 \u0645\u0646\u0635\u0648\u0628"], "A"),
+        ("\u0645\u0627 \u0627\u0644\u0628\u062d\u0631 \u0627\u0644\u0634\u0639\u0631\u064a \u0627\u0644\u0630\u064a \u0648\u0632\u0646\u0647: \u0645\u0633\u062a\u0641\u0639\u0644\u0646 \u0641\u0627\u0639\u0644\u0646 \u0645\u0633\u062a\u0641\u0639\u0644\u0646 \u0641\u0627\u0639\u0644\u0646\u061f",
+         ["\u0627\u0644\u0628\u0633\u064a\u0637", "\u0627\u0644\u0631\u062c\u0632", "\u0627\u0644\u0643\u0627\u0645\u0644", "\u0627\u0644\u0637\u0648\u064a\u0644"], "A"),
+    ]
+    assert list(P.LIVE_SAMPLES) == ["Saudi capital (easy)", "Arabic grammar (hard)", "Arabic poetry meter (hard)"]  # the second one escalated when run live
+    if S.EXAMPLES.exists():
+        recorded = {ex["question"] for ex in S.load_json(S.EXAMPLES)["examples"].values()}
+        assert not recorded & {s["question"] for s in P.LIVE_SAMPLES.values()}
+
+
+@pytest.mark.parametrize("label", list(P.LIVE_SAMPLES))
+def test_live_sample_only_fills_the_form(live, label):
+    load_sample(live, label)
+    sample = P.LIVE_SAMPLES[label]
     assert not live.exception and live.fake.calls == []
-    assert live.text_area(key="try_q").value == "\u0645\u0627 \u0639\u0627\u0635\u0645\u0629 \u0627\u0644\u0645\u0645\u0644\u0643\u0629 \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629\u061f"
-    assert [live.text_input(key=f"try_{k}").value for k in "abcde"] == ["\u0627\u0644\u0631\u064a\u0627\u0636", "\u062c\u062f\u0629", "\u0645\u0643\u0629 \u0627\u0644\u0645\u0643\u0631\u0645\u0629", "\u0627\u0644\u062f\u0645\u0627\u0645", ""]
+    assert form_values(live) == [sample["question"], *sample["options"], ""]
     assert live.selectbox(key="try_known").value == "A"
     assert "LIVE API RUN" not in form_text(live)
 
 
-@pytest.mark.skipif(not S.EXAMPLES.exists(), reason="demo_examples.json is built locally")
-def test_live_challenging_example_is_the_recorded_item_and_only_fills_the_form(live):
-    live.button(key="btn_challenging").click().run()
+def test_live_typed_text_in_either_language_runs_as_typed_and_only_on_the_button(live):
+    typed = {"a": "\u0623\u0648\u0644", "b": "second", "c": "\u062b\u0627\u0644\u062b", "d": "fourth", "e": "\u062e\u0627\u0645\u0633"}
+    lab_form(live, "\u0633\u0624\u0627\u0644 with English?", typed)
+    live.run()  # a rerun with no button pressed
     assert not live.exception and live.fake.calls == []
-    low = S.load_json(S.EXAMPLES)["examples"]["lower_confidence"]
-    assert str(low["id"]) == "7330" and low["correct_answer"] == "A"
-    assert live.text_area(key="try_q").value == low["question"]
-    assert [live.text_input(key=f"try_{k}").value for k in "abcd"] == low["options"]
-    assert live.selectbox(key="try_known").value == "A"
-    assert "LIVE API RUN" not in form_text(live)
+    lab_form(live, "\u0633\u0624\u0627\u0644 with English?", typed)
+    live.button(key="btn_run").click().run()
+    assert len(live.fake.calls) == 1
+    prompt = live.fake.calls[0]["messages"][1]["content"]
+    assert "\u0633\u0624\u0627\u0644 with English?" in prompt and "E. \u062e\u0627\u0645\u0633" in prompt
 
 
-def test_live_lab_never_offers_the_old_sample_question(live):
+def test_live_enter_never_submits_the_form():
+    source = (ROOT / "app" / "streamlit_app.py").read_text(encoding="utf-8")
+    assert 'st.form("live_form", border=False, enter_to_submit=False)' in source
+
+
+def test_live_clear_empties_the_form_and_the_result_without_a_call(live):
+    lab_form(live, options={"a": "v", "b": "w", "c": "x", "d": "y", "e": "z"}, known="A")
+    live.button(key="btn_run").click().run()
+    assert "LIVE API RUN" in form_text(live) and len(live.fake.calls) == 1
+    live.button(key="btn_clear").click().run()
+    assert not live.exception and len(live.fake.calls) == 1
+    assert form_values(live) == [""] * 6 and live.selectbox(key="try_known").value == ""
+    assert "LIVE API RUN" not in form_text(live) and "live" not in live.session_state
+
+
+def test_live_loading_a_sample_replaces_the_previous_result_without_a_call(live):
+    lab_form(live)
+    live.button(key="btn_run").click().run()
+    load_sample(live, "Saudi capital (easy)")
+    assert len(live.fake.calls) == 1 and "LIVE API RUN" not in form_text(live)
+
+
+def test_live_lab_never_offers_the_old_sample_questions(live):
     old = "\u0636\u062f \u0643\u0644\u0645\u0629 \u0642\u062f\u064a\u0645"
-    for button in ("btn_saudi", "btn_challenging"):
-        live.button(key=button).click().run()
-        assert live.text_area(key="try_q").value != old and old not in form_text(live)
-    assert old not in (ROOT / "app" / "streamlit_app.py").read_text(encoding="utf-8")
+    removed = [old]
+    if S.EXAMPLES.exists():
+        removed.append(S.load_json(S.EXAMPLES)["examples"]["lower_confidence"]["question"])
+    for label in P.LIVE_SAMPLES:
+        load_sample(live, label)
+        assert live.text_area(key="try_q").value not in removed
+        assert not any(question in form_text(live) for question in removed)
+    source = (ROOT / "app" / "streamlit_app.py").read_text(encoding="utf-8")
+    assert old not in source and "lower_confidence" not in source
 
 
 def test_live_confident_answer_is_accepted_with_no_second_call(live):

@@ -129,8 +129,15 @@ LIVE_ACCEPTED, LIVE_ESCALATED = "Accepted — no second model call", "Escalated 
 LIVE_BUTTON = "Try your own question — Live"
 LIVE_FORM_NOTE = "Examples only preload the inputs. Routing is decided live."
 LIVE_RESULT_NOTE = "Live product demonstration — not part of the reported held-out evaluation."
-SAUDI_EXAMPLE = {"question": "ما عاصمة المملكة العربية السعودية؟",
-                 "options": ["الرياض", "جدة", "مكة المكرمة", "الدمام"], "correct_answer": "A"}
+# Written for the Live Lab. None comes from ArabicMMLU or the recorded examples.
+LIVE_SAMPLES = {
+    "Saudi capital (easy)": {"question": "ما عاصمة المملكة العربية السعودية؟",
+                             "options": ["الرياض", "جدة", "مكة المكرمة", "الدمام"], "correct_answer": "A"},
+    "Arabic grammar (hard)": {"question": 'ما إعراب كلمة "طالبًا" في جملة: "ما رأيتُ أحدًا طالبًا للعلم مثله"؟',
+                              "options": ["نعت منصوب", "حال منصوبة", "مفعول به ثانٍ", "تمييز منصوب"], "correct_answer": "A"},
+    "Arabic poetry meter (hard)": {"question": "ما البحر الشعري الذي وزنه: مستفعلن فاعلن مستفعلن فاعلن؟",
+                                   "options": ["البسيط", "الرجز", "الكامل", "الطويل"], "correct_answer": "A"},
+}
 
 
 def live_answer(label: str, letter: str | None, options: list[str], tone: str, missing: str = "No valid answer letter was returned.") -> str:
