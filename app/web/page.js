@@ -24,9 +24,16 @@
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
   fit();
 
-  /* Scrolling across the Streamlit document and both iframes. */
+  /* Scrolling across the Streamlit document and the iframe. */
   var host = null;
   try { host = window.parent.document; } catch (err) { host = null; }
+  function screenHeight() {
+    var main = host && host.querySelector('[data-testid="stMain"]'), bar = host && host.querySelector(".mz-head");
+    if (main && bar) document.documentElement.style.setProperty("--screen-h", (main.clientHeight - bar.getBoundingClientRect().height) + "px");
+  }
+  screenHeight();
+  if (host) window.parent.addEventListener("resize", screenHeight);
+  window.addEventListener("load", screenHeight);
   function locate(id) {
     if (!host) { var own = document.getElementById(id); return own ? { el: own, frame: null } : null; }
     var direct = id === "try" ? host.querySelector(".st-key-try") : host.getElementById(id);

@@ -393,6 +393,24 @@ def test_no_placeholder_is_visible(page):
     assert not re.search(r"\[N\]|TODO|TBD|lorem", visible(page), re.I)
 
 
+@pytest.mark.skipif(not (ROOT / "exports" / "deck_numbers.json").exists(), reason="exports are built by scripts/export_assets.py")
+def test_deck_numbers_trace_back_to_their_source_files():
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import build_readme  # noqa: F401  (puts src on the path the way the scripts do)
+    import export_assets as X
+    rows = json.loads((ROOT / "exports" / "deck_numbers.json").read_text(encoding="utf-8"))
+    res, ex = S.load_json(S.RESULTS), S.load_json(S.EXAMPLES)
+    assert rows == X.deck_numbers(res, ex)
+    sources = {X.RESULTS: res, X.EXAMPLES: ex}
+    for row in rows:
+        assert (ROOT / row["source_file"]).exists()
+        if row["source_file"] in sources and "," not in row["key"]:
+            assert X.resolve(sources[row["source_file"]], row["key"]) == row["value"], row["name"]
+    shown = {r["name"]: r["display"] for r in rows}
+    assert shown["Lower measured inference cost, headline"] == "66%" and shown["Fewer errors among accepted answers"] == "40%"
+    assert shown["Price date status: documented"] == "2026-10-30"
+
+
 def test_only_the_slow_circles_loop():
     css = (P.WEB / "page.css").read_text(encoding="utf-8")
     assert sorted(re.findall(r"\.(ring-[ab]) \{ animation: spin \d+s linear infinite", css)) == ["ring-a", "ring-b"]

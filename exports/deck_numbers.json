@@ -1,0 +1,451 @@
+[
+ {
+  "name": "Lower measured inference cost, headline",
+  "display": "66%",
+  "value": 0.6645401106500691,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.mizan.saving_vs_top"
+ },
+ {
+  "name": "Lower measured inference cost, exact",
+  "display": "66.45%",
+  "value": 0.6645401106500691,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.mizan.saving_vs_top"
+ },
+ {
+  "name": "Saving 95% CI",
+  "display": "[62.44%, 70.48%]",
+  "value": [
+   0.6244493922372362,
+   0.7048413440709774
+  ],
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.mizan.saving_ci95"
+ },
+ {
+  "name": "Accuracy points vs always-economical",
+  "display": "+5.4",
+  "value": 0.05400000000000005,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.non_dominance.paired.gpt-4o-mini.accuracy_diff.observed"
+ },
+ {
+  "name": "Accuracy points vs always-economical 95% CI",
+  "display": "[+2.6, +8.4]",
+  "value": [
+   0.026000000000000023,
+   0.08405000000000003
+  ],
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.non_dominance.paired.gpt-4o-mini.accuracy_diff.ci95"
+ },
+ {
+  "name": "MIZAN accuracy",
+  "display": "79.0%",
+  "value": 0.79,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.mizan.accuracy"
+ },
+ {
+  "name": "MIZAN accuracy 95% CI",
+  "display": "[75.40%, 82.41%]",
+  "value": [
+   0.754,
+   0.82405
+  ],
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.mizan.accuracy_ci95"
+ },
+ {
+  "name": "Always-large accuracy",
+  "display": "82.6%",
+  "value": 0.826,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.singles.gpt-4.1.accuracy"
+ },
+ {
+  "name": "Always-large accuracy 95% CI",
+  "display": "[79.40%, 85.80%]",
+  "value": [
+   0.794,
+   0.858
+  ],
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.singles.gpt-4.1.accuracy_ci95"
+ },
+ {
+  "name": "Always-economical accuracy",
+  "display": "73.6%",
+  "value": 0.736,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.singles.gpt-4o-mini.accuracy"
+ },
+ {
+  "name": "Mid-size accuracy",
+  "display": "76.0%",
+  "value": 0.76,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.singles.gpt-4.1-mini.accuracy"
+ },
+ {
+  "name": "Matched random accuracy",
+  "display": "75.9%",
+  "value": 0.759026,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.random.accuracy_mean"
+ },
+ {
+  "name": "Points below always-large",
+  "display": "3.6",
+  "value": -0.03599999999999992,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.non_dominance.paired.gpt-4.1.accuracy_diff.observed",
+  "derivation": "absolute value"
+ },
+ {
+  "name": "Difference from always-large 95% CI",
+  "display": "[-6.0, -1.4]",
+  "value": [
+   -0.06004999999999994,
+   -0.013999999999999901
+  ],
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.non_dominance.paired.gpt-4.1.accuracy_diff.ci95"
+ },
+ {
+  "name": "Fewer errors among accepted answers",
+  "display": "40%",
+  "value": 0.4008449102282883,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.mechanism.random_acceptance_risk, original.mechanism.selective_risk",
+  "derivation": "(random_acceptance_risk - selective_risk) / random_acceptance_risk"
+ },
+ {
+  "name": "Error among accepted answers",
+  "display": "15.82%",
+  "value": 0.1581769436997319,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.mechanism.selective_risk"
+ },
+ {
+  "name": "Error under matched random acceptance",
+  "display": "26.40%",
+  "value": 0.264,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.mechanism.random_acceptance_risk"
+ },
+ {
+  "name": "Accepted without escalation",
+  "display": "74.6%",
+  "value": 0.746,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.mechanism.coverage"
+ },
+ {
+  "name": "Escalated",
+  "display": "25.4%",
+  "value": 0.254,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.mizan.achieved_escalation"
+ },
+ {
+  "name": "Held-out questions",
+  "display": "500",
+  "value": 500,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.n"
+ },
+ {
+  "name": "AUROC, original",
+  "display": "0.821",
+  "value": 0.8213726943346509,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.mechanism.auroc"
+ },
+ {
+  "name": "AUROC, original, descriptive 95% CI",
+  "display": "[0.7828, 0.8604]",
+  "value": [
+   0.7827575369095519,
+   0.860406373708159
+  ],
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.mechanism.auroc_ci95_descriptive"
+ },
+ {
+  "name": "AUROC, option-shuffled",
+  "display": "0.825",
+  "value": 0.8248308818966053,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "perturbation.mechanism.auroc"
+ },
+ {
+  "name": "AUROC, option-shuffled, descriptive 95% CI",
+  "display": "[0.7835, 0.8618]",
+  "value": [
+   0.7835446809083818,
+   0.8618398611344538
+  ],
+  "source_file": "artifacts/heldout_results.json",
+  "key": "perturbation.mechanism.auroc_ci95_descriptive"
+ },
+ {
+  "name": "Frozen threshold",
+  "display": "6.25",
+  "value": 6.249999994711611,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.threshold"
+ },
+ {
+  "name": "MIZAN vs matched random (directional, not conclusive)",
+  "display": "+3.1",
+  "value": 0.030974000000000057,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.mizan_minus_random.observed"
+ },
+ {
+  "name": "MIZAN vs matched random 95% CI",
+  "display": "[-0.2, +6.0]",
+  "value": [
+   -0.0020000000000000018,
+   0.06000000000000005
+  ],
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.mizan_minus_random.ci95"
+ },
+ {
+  "name": "MIZAN vs mid-size",
+  "display": "+3.0",
+  "value": 0.030000000000000027,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.non_dominance.paired.gpt-4.1-mini.accuracy_diff.observed"
+ },
+ {
+  "name": "MIZAN vs mid-size 95% CI",
+  "display": "[-0.2, +6.4]",
+  "value": [
+   -0.0020000000000000018,
+   0.06400000000000006
+  ],
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.non_dominance.paired.gpt-4.1-mini.accuracy_diff.ci95"
+ },
+ {
+  "name": "MIZAN cost, USD",
+  "display": "$0.03104",
+  "value": 0.0310448,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.mizan.total_cost_usd"
+ },
+ {
+  "name": "Always-large cost, USD",
+  "display": "$0.09254",
+  "value": 0.092544,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.singles.gpt-4.1.total_cost_usd"
+ },
+ {
+  "name": "Always-economical cost, USD",
+  "display": "$0.00694",
+  "value": 0.0069408000000000004,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.singles.gpt-4o-mini.total_cost_usd"
+ },
+ {
+  "name": "Mid-size cost, USD",
+  "display": "$0.01851",
+  "value": 0.0185088,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.singles.gpt-4.1-mini.total_cost_usd"
+ },
+ {
+  "name": "Matched random cost, USD",
+  "display": "$0.03045",
+  "value": 0.030448538,
+  "source_file": "artifacts/heldout_results.json",
+  "key": "original.random.total_cost_usd_mean"
+ },
+ {
+  "name": "Preregistration commit",
+  "display": "a34020c",
+  "value": "a34020c1e01758f9098cf529c5e7b615088805ba",
+  "source_file": "artifacts/heldout_results.json",
+  "key": "preflight.approved_commit"
+ },
+ {
+  "name": "Held-out run commit",
+  "display": "47ee70a",
+  "value": "47ee70a0a02d5fec8d17711fc8beb6c7b2db6c24",
+  "source_file": "artifacts/heldout_results.json",
+  "key": "preflight.head"
+ },
+ {
+  "name": "Accept case: ID",
+  "display": "6398",
+  "value": "6398",
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.high_confidence.id"
+ },
+ {
+  "name": "Accept case: economical model option 1 letter",
+  "display": "A",
+  "value": "A",
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.high_confidence.gpt_4o_mini.option_probabilities[0].letter"
+ },
+ {
+  "name": "Accept case: economical model option 1 probability",
+  "display": "100.000%",
+  "value": 1.0000000002463059,
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.high_confidence.gpt_4o_mini.option_probabilities[0].probability"
+ },
+ {
+  "name": "Accept case: economical model option 2 letter",
+  "display": "B",
+  "value": "B",
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.high_confidence.gpt_4o_mini.option_probabilities[1].letter"
+ },
+ {
+  "name": "Accept case: economical model option 2 probability",
+  "display": "<0.01%",
+  "value": 1.0603575991523846e-13,
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.high_confidence.gpt_4o_mini.option_probabilities[1].probability"
+ },
+ {
+  "name": "Accept case: economical model answer",
+  "display": "A",
+  "value": "A",
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.high_confidence.gpt_4o_mini.answer"
+ },
+ {
+  "name": "Accept case: answer key",
+  "display": "A",
+  "value": "A",
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.high_confidence.correct_answer"
+ },
+ {
+  "name": "Accept case: route",
+  "display": "handled",
+  "value": "handled",
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.high_confidence.decision"
+ },
+ {
+  "name": "Accept case: final answer",
+  "display": "A",
+  "value": "A",
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.high_confidence.final_answer"
+ },
+ {
+  "name": "Accept case: final answer correct",
+  "display": "Correct",
+  "value": true,
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.high_confidence.answered_correctly"
+ },
+ {
+  "name": "Escalate case: ID",
+  "display": "7330",
+  "value": "7330",
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.lower_confidence.id"
+ },
+ {
+  "name": "Escalate case: economical model option 1 letter",
+  "display": "A",
+  "value": "A",
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.lower_confidence.gpt_4o_mini.option_probabilities[0].letter"
+ },
+ {
+  "name": "Escalate case: economical model option 1 probability",
+  "display": "49.999%",
+  "value": 0.4999892885937599,
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.lower_confidence.gpt_4o_mini.option_probabilities[0].probability"
+ },
+ {
+  "name": "Escalate case: economical model option 2 letter",
+  "display": "B",
+  "value": "B",
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.lower_confidence.gpt_4o_mini.option_probabilities[1].letter"
+ },
+ {
+  "name": "Escalate case: economical model option 2 probability",
+  "display": "49.999%",
+  "value": 0.4999892789554697,
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.lower_confidence.gpt_4o_mini.option_probabilities[1].probability"
+ },
+ {
+  "name": "Escalate case: economical model answer",
+  "display": "B",
+  "value": "B",
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.lower_confidence.gpt_4o_mini.answer"
+ },
+ {
+  "name": "Escalate case: answer key",
+  "display": "A",
+  "value": "A",
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.lower_confidence.correct_answer"
+ },
+ {
+  "name": "Escalate case: route",
+  "display": "escalated",
+  "value": "escalated",
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.lower_confidence.decision"
+ },
+ {
+  "name": "Escalate case: final answer",
+  "display": "A",
+  "value": "A",
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.lower_confidence.final_answer"
+ },
+ {
+  "name": "Escalate case: final answer correct",
+  "display": "Correct",
+  "value": true,
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.lower_confidence.answered_correctly"
+ },
+ {
+  "name": "Escalate case: high-capability model answer",
+  "display": "A",
+  "value": "A",
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.lower_confidence.gpt_4_1.answer"
+ },
+ {
+  "name": "Escalate case: high-capability model probability",
+  "display": "98.407%",
+  "value": 0.9840684248579662,
+  "source_file": "artifacts/demo_examples.json",
+  "key": "examples.lower_confidence.gpt_4_1.option_probabilities[0].probability"
+ },
+ {
+  "name": "Price date status: documented",
+  "display": "2026-10-30",
+  "value": "2026-10-30",
+  "source_file": "config/prices.yaml",
+  "key": "verified_on"
+ },
+ {
+  "name": "Automated tests passing",
+  "display": "141",
+  "value": 141,
+  "source_file": "artifacts/test_summary.txt",
+  "key": "count"
+ }
+]
