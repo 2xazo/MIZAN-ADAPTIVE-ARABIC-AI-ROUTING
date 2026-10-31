@@ -276,6 +276,11 @@ def test_scale_dims_only_during_an_interaction():
     assert '.stage[data-highlight="1"] .part:not(.p-request)' in css
     assert '.stage[data-active' not in css
     assert 'data-active="1"' in top and "data-highlight" not in top  # the default card shows with nothing dimmed
+    js = (P.WEB / "page.js").read_text(encoding="utf-8")
+    assert "--tilt: 0deg" in css and "--tilt" not in top  # level at rest
+    assert js.count("tilt(-8)") == 1 and js.count("tilt(8)") == 1  # tilted from the click handler only
+    click = js.split('p.addEventListener("click"')[1]
+    assert "tilt(-8)" in click and "tilt(8)" in click and "tilt(-8)" not in js.split('p.addEventListener("click"')[0]
 
 
 def test_scale_cards_have_the_measured_share(res):

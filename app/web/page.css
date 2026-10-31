@@ -78,6 +78,10 @@ h1 { font-size: clamp(2rem, 3.7vw, 3.15rem); font-weight: 700; line-height: 1.1;
 .stage[data-highlight="2"] .part:not(.p-small),
 .stage[data-highlight="3"] .part:not(.p-gate),
 .stage[data-highlight="4"] .part:not(.p-large) { opacity: .4; }
+.beam { --tilt: 0deg; transform-box: view-box; transform-origin: 60px 40px; transform: rotate(var(--tilt)); transition: transform .8s cubic-bezier(.3, 1.4, .5, 1); }
+.pan { transform-box: view-box; transition: transform .8s cubic-bezier(.3, 1.4, .5, 1), opacity .3s ease; transform: rotate(calc(var(--tilt) * -1)); }
+.pan-l { transform-origin: 18px 40px; }
+.pan-r { transform-origin: 102px 40px; }
 .pt { position: absolute; display: flex; align-items: center; gap: 10px; padding: 4px; border-radius: 12px; font-weight: 600; font-size: .92rem; line-height: 1.25; text-align: left; color: var(--text); opacity: .86; text-shadow: 0 0 6px var(--bg), 0 0 2px var(--bg); transition: opacity .2s, transform .2s; }
 .pt i { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--text); color: var(--bg); font-style: normal; font-family: var(--head); font-size: .82rem; font-weight: 700; text-shadow: none; transition: box-shadow .2s; }
 .pt.lime { color: var(--lime); } .pt.lime i { background: var(--lime); }
@@ -316,5 +320,5 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
 }
 @media (prefers-reduced-motion: reduce) {
   .ring { animation: none; }
-  .x-body, .optrow, .progress i, .btn, .play .meter i, .play .reveal { transition: none; }
+  .beam, .pan, .x-body, .optrow, .progress i, .btn, .play .meter i, .play .reveal { transition: none; }
 }

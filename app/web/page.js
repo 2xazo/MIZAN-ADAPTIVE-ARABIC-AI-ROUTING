@@ -169,7 +169,9 @@
   var stage = $("#stage");
   if (stage && D.scale) {
     var card = $("#scale-card");
+    var beam = $(".beam", stage);
     var points = $$(".pt", stage);
+    var tiltTimer = null;
     /* The card always shows the last point. Dimming happens only during an interaction, and the scale is otherwise at full colour. */
     var HOLD_AFTER_CLICK_MS = 2000;
     var held = { hover: 0, keyboard: 0, click: 0 };
@@ -184,6 +186,13 @@
       $("strong", card).textContent = D.scale[n - 1].title;
       $("p", card).textContent = D.scale[n - 1].text;
       points.forEach(function (p) { p.classList.toggle("on", p.getAttribute("data-p") === String(n)); });
+    };
+    /* Only a click tilts the scale. It settles back level, so the resting state never depends on it. */
+    var tilt = function (deg) {
+      if (reduced) return;
+      clearTimeout(tiltTimer);
+      beam.style.setProperty("--tilt", deg + "deg");
+      tiltTimer = setTimeout(function () { beam.style.setProperty("--tilt", "0deg"); }, 1300);
     };
     points.forEach(function (p) {
       var n = Number(p.getAttribute("data-p"));
@@ -212,6 +221,8 @@
         syncHighlight();
         clearTimeout(clickTimer);
         clickTimer = setTimeout(function () { held.click = 0; syncHighlight(); }, HOLD_AFTER_CLICK_MS);
+        if (n === 2) tilt(-8);
+        if (n === 4) tilt(8);
       });
     });
     activate(1);
