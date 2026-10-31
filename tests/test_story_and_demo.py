@@ -640,7 +640,7 @@ def test_every_nav_link_has_a_section(app):
 
 def test_live_lab_is_hidden_by_default(app):
     text = visible(page_text(app))
-    assert "Try your own question" not in text and "mz-try-title" not in text
+    assert P.LIVE_TITLE not in text and "mz-try-title" not in text and P.LIVE_NAV[1] not in text
     assert not list(app.button)
 
 
@@ -710,11 +710,37 @@ def small_then_large_fails(error):
     return chat
 
 
-def test_live_lab_is_a_section_after_the_page_and_the_demo_button_only_navigates(lab):
-    frame = lab.get("iframe")[0].proto.srcdoc
-    link = f'<a class="btn primary" href="#live" data-go="live">{P.LIVE_BUTTON}</a>'
-    assert frame.index('id="panel-low"') < frame.index(link) < frame.index('id="results"')
-    assert not any("Live" in label for _, label in P.NAV)
+def test_live_lab_sits_between_two_iframes_that_split_at_results(lab):
+    top, bottom = [el.proto.srcdoc for el in lab.get("iframe")]
+    assert 'id="panel-low"' in top and 'id="results"' not in top and 'id="footer"' not in top
+    assert visible(bottom).index('id="results"') < visible(bottom).index('id="footer"') and 'id="demo"' not in bottom
+    for section in SECTION_IDS:
+        assert (top + bottom).count(f'id="{section}"') == 1, section
+    source = (ROOT / "app" / "streamlit_app.py").read_text(encoding="utf-8")
+    assert source.index('docs["pages"][0]') < source.index("live_section(docs)\n") < source.index('docs["pages"][1]')
+    assert re.search(r"</section>\s*</div></body></html>$", visible(top)) and ".s-demo:last-child { min-height: 0;" in top  # no empty screen above the form
+    assert 'data-go="live"' not in top + bottom
+    assert "plotly.js" in bottom and "plotly.js" not in top
+    assert script_data(top)["scale"] and script_data(bottom)["replay"]["final"]["saving"] == "66%" and "scale" not in script_data(bottom)
+
+
+def test_live_demo_nav_comes_right_after_demo_only_when_the_lab_is_on(lab):
+    link = '<a href="#demo">Demo</a><a href="#live">Live Demo</a><a href="#results">Results</a>'
+    assert link in form_text(lab) and link in P.build_header(True)
+    assert "#live" not in P.build_header() and not any("Live" in label for _, label in P.NAV)
+
+
+def test_live_card_has_the_title_steps_placeholders_and_field_order(lab):
+    text = form_text(lab)
+    assert '<span class="badge live">LIVE</span>' in text and "Try your own Arabic question" in text
+    assert "<b>1.</b> Write your question" in text and "<b>2.</b> Add the answer options" in text and "<b>3.</b> Press Run MIZAN Live" in text
+    assert lab.text_area(key="try_q").placeholder == "Type your Arabic question here\u2026"
+    assert [lab.text_input(key=f"try_{k}").placeholder for k in "abcde"] == [f"Option {k}\u2026" for k in "ABCDE"]
+    source = (ROOT / "app" / "streamlit_app.py").read_text(encoding="utf-8")
+    assert source.index('st.text_area("Question"') < source.index('"Run MIZAN Live"') < source.index('"Clear"') < source.index('"Load a sample"')
+    shell = (P.WEB / "shell.css").read_text(encoding="utf-8")
+    assert ".st-key-live_card { border: 2px solid var(--lime);" in shell and "--lime: #D0F94A" in (P.WEB / "components.css").read_text(encoding="utf-8")
+    assert '[data-testid="stTextInputRootElement"]:focus-within' in shell and '[data-testid="stTextAreaRootElement"]:focus-within' in shell
     assert lab.button(key="btn_run").label == "Run MIZAN Live"
     assert lab.button(key="btn_load").label == "Load" and lab.button(key="btn_clear").label == "Clear"
     assert lab.selectbox(key="try_sample").label == "Load a sample" and list(lab.selectbox(key="try_sample").options) == list(P.LIVE_SAMPLES)
@@ -722,12 +748,16 @@ def test_live_lab_is_a_section_after_the_page_and_the_demo_button_only_navigates
     assert P.LIVE_FORM_NOTE == "Examples only preload the inputs. Routing is decided live." and P.LIVE_FORM_NOTE in form_text(lab)
 
 
+def test_page_is_one_iframe_when_the_lab_is_off(app):
+    assert len(app.get("iframe")) == 1
+
+
 def test_live_lab_has_no_overlay_and_is_a_fragment():
     source = (ROOT / "app" / "streamlit_app.py").read_text(encoding="utf-8")
     assert "@st.fragment\ndef live_section" in source
     for name in ("page.js", "page.css", "shell.css", "page.html"):
         text = (P.WEB / name).read_text(encoding="utf-8")
-        assert "live-slot" not in text and "--live-top" not in text
+        assert "live-slot" not in text and "--live-top" not in text and "live-go" not in text
 
 
 def test_live_link_is_absent_when_the_lab_is_off(app):
@@ -762,11 +792,11 @@ def test_live_samples_are_the_approved_three_and_not_recorded_items():
         ("\u0645\u0627 \u0639\u0627\u0635\u0645\u0629 \u0627\u0644\u0645\u0645\u0644\u0643\u0629 \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629\u061f",
          ["\u0627\u0644\u0631\u064a\u0627\u0636", "\u062c\u062f\u0629", "\u0645\u0643\u0629 \u0627\u0644\u0645\u0643\u0631\u0645\u0629", "\u0627\u0644\u062f\u0645\u0627\u0645"], "A"),
         ("\u0645\u0627 \u0625\u0639\u0631\u0627\u0628 \u0643\u0644\u0645\u0629 \"\u0637\u0627\u0644\u0628\u064b\u0627\" \u0641\u064a \u062c\u0645\u0644\u0629: \"\u0645\u0627 \u0631\u0623\u064a\u062a\u064f \u0623\u062d\u062f\u064b\u0627 \u0637\u0627\u0644\u0628\u064b\u0627 \u0644\u0644\u0639\u0644\u0645 \u0645\u062b\u0644\u0647\"\u061f",
-         ["\u0646\u0639\u062a \u0645\u0646\u0635\u0648\u0628", "\u062d\u0627\u0644 \u0645\u0646\u0635\u0648\u0628\u0629", "\u0645\u0641\u0639\u0648\u0644 \u0628\u0647 \u062b\u0627\u0646\u064d", "\u062a\u0645\u064a\u064a\u0632 \u0645\u0646\u0635\u0648\u0628"], "A"),
+         ["\u0646\u0639\u062a \u0645\u0646\u0635\u0648\u0628", "\u062d\u0627\u0644 \u0645\u0646\u0635\u0648\u0628\u0629", "\u0645\u0641\u0639\u0648\u0644 \u0628\u0647 \u062b\u0627\u0646\u064d", "\u062a\u0645\u064a\u064a\u0632 \u0645\u0646\u0635\u0648\u0628"], ""),
         ("\u0645\u0627 \u0627\u0644\u0628\u062d\u0631 \u0627\u0644\u0634\u0639\u0631\u064a \u0627\u0644\u0630\u064a \u0648\u0632\u0646\u0647: \u0645\u0633\u062a\u0641\u0639\u0644\u0646 \u0641\u0627\u0639\u0644\u0646 \u0645\u0633\u062a\u0641\u0639\u0644\u0646 \u0641\u0627\u0639\u0644\u0646\u061f",
          ["\u0627\u0644\u0628\u0633\u064a\u0637", "\u0627\u0644\u0631\u062c\u0632", "\u0627\u0644\u0643\u0627\u0645\u0644", "\u0627\u0644\u0637\u0648\u064a\u0644"], "A"),
     ]
-    assert list(P.LIVE_SAMPLES) == ["Saudi capital (easy)", "Arabic grammar (hard)", "Arabic poetry meter (hard)"]  # the second one escalated when run live
+    assert list(P.LIVE_SAMPLES) == ["Saudi capital (easy)", "Arabic grammar (hard)", "Arabic poetry meter"]  # the second one escalated when run live
     if S.EXAMPLES.exists():
         recorded = {ex["question"] for ex in S.load_json(S.EXAMPLES)["examples"].values()}
         assert not recorded & {s["question"] for s in P.LIVE_SAMPLES.values()}
@@ -778,8 +808,17 @@ def test_live_sample_only_fills_the_form(live, label):
     sample = P.LIVE_SAMPLES[label]
     assert not live.exception and live.fake.calls == []
     assert form_values(live) == [sample["question"], *sample["options"], ""]
-    assert live.selectbox(key="try_known").value == "A"
+    assert live.selectbox(key="try_known").value == sample["correct_answer"]
     assert "LIVE API RUN" not in form_text(live)
+
+
+def test_live_grammar_sample_loads_with_no_known_option_and_shows_no_verdict(live):
+    live.fake.small, live.fake.large = unsure("A"), unsure("B")
+    load_sample(live, "Arabic grammar (hard)")
+    assert live.selectbox(key="try_known").value == ""
+    live.button(key="btn_run").click().run()
+    assert not live.exception and P.LIVE_ESCALATED in form_text(live)
+    assert "Correct<" not in form_text(live) and "Incorrect<" not in form_text(live)
 
 
 def test_live_typed_text_in_either_language_runs_as_typed_and_only_on_the_button(live):

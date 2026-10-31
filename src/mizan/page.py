@@ -27,8 +27,10 @@ LETTERS = "ABCDE"
 MAX_QUESTION_CHARS = 2000
 MAX_OPTION_CHARS = 500
 TOKEN = re.compile(r"\{\{(\w+)\}\}")
+RESULTS_START = '<section class="s s-results" id="results">'
 NAV = (("overview", "Overview"), ("problem", "Problem"), ("demo", "Demo"), ("results", "Results"), ("robustness", "Robustness"),
        ("impact", "Impact"), ("replay", "Replay"), ("technical", "Technical details"))
+LIVE_NAV = ("live", "Live Demo")  # shown only when the Live Lab is on, right after Demo
 LOGO_MARK = ('<svg class="mark" viewBox="0 0 120 120" role="img" aria-label="MIZAN logo">'
              '<path d="M60 8 L68 16 L60 24 L52 16 Z" fill="#D0F94A"/>'
              '<line x1="60" y1="26" x2="60" y2="100" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>'
@@ -126,7 +128,9 @@ def validate_free_input(question: str, options: list[str], known: str = "") -> t
 
 LIVE_NO_KEY = "Live mode is unavailable because OPENAI_API_KEY is not configured. The recorded examples remain available."
 LIVE_ACCEPTED, LIVE_ESCALATED = "Accepted — no second model call", "Escalated — high-capability model called"
-LIVE_BUTTON = "Try your own question — Live"
+LIVE_TITLE = "Try your own Arabic question"
+LIVE_STEPS = ("Write your question", "Add the answer options", "Press Run MIZAN Live")
+LIVE_QUESTION_PLACEHOLDER = "Type your Arabic question here…"
 LIVE_FORM_NOTE = "Examples only preload the inputs. Routing is decided live."
 LIVE_RESULT_NOTE = "Live product demonstration — not part of the reported held-out evaluation."
 # Written for the Live Lab. None comes from ArabicMMLU or the recorded examples.
@@ -134,9 +138,9 @@ LIVE_SAMPLES = {
     "Saudi capital (easy)": {"question": "ما عاصمة المملكة العربية السعودية؟",
                              "options": ["الرياض", "جدة", "مكة المكرمة", "الدمام"], "correct_answer": "A"},
     "Arabic grammar (hard)": {"question": 'ما إعراب كلمة "طالبًا" في جملة: "ما رأيتُ أحدًا طالبًا للعلم مثله"؟',
-                              "options": ["نعت منصوب", "حال منصوبة", "مفعول به ثانٍ", "تمييز منصوب"], "correct_answer": "A"},
-    "Arabic poetry meter (hard)": {"question": "ما البحر الشعري الذي وزنه: مستفعلن فاعلن مستفعلن فاعلن؟",
-                                   "options": ["البسيط", "الرجز", "الكامل", "الطويل"], "correct_answer": "A"},
+                              "options": ["نعت منصوب", "حال منصوبة", "مفعول به ثانٍ", "تمييز منصوب"], "correct_answer": ""},
+    "Arabic poetry meter": {"question": "ما البحر الشعري الذي وزنه: مستفعلن فاعلن مستفعلن فاعلن؟",
+                            "options": ["البسيط", "الرجز", "الكامل", "الطويل"], "correct_answer": "A"},
 }
 
 
@@ -610,33 +614,48 @@ def tokens_for(res: dict, examples: dict | None) -> dict:
         "tech_models": tech_models(res), "tech_repro": tech_repro(res, examples),
         "logo_mark": LOGO_MARK, "logo_png": base64.b64encode(LOGO.read_bytes()).decode(),
         "footer_github": f'<a class="flink" href="{e(url)}" target="_blank" rel="noopener">GitHub</a>' if url else "",
-        "live_link": "",
     }
     return {**tokens, **metric_details(res), **demo_panels(examples)}
 
 
-def _document(body_file: str, tokens: dict, data: dict, libraries: str = "") -> str:
+def _document(body: str, data: dict, libraries: str = "") -> str:
     css = (WEB / "components.css").read_text(encoding="utf-8") + (WEB / "page.css").read_text(encoding="utf-8")
     js = (WEB / "page.js").read_text(encoding="utf-8")
-    body = fill((WEB / body_file).read_text(encoding="utf-8"), tokens)
     return ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             f'<style>{css}</style></head><body><div id="page">{body}</div>'
             f'{libraries}<script>window.MIZAN={script_json(data)};</script><script>{js}</script></body></html>')
 
 
-def build_page(res: dict, per_item: dict, examples: dict | None, live: bool = False) -> str:
-    """`live` adds the Demo section's link to the Live Lab, which is a Streamlit section after this iframe."""
-    data ={"scale": scale_cards(res), "replay": replay_data(res, per_item), "chart": chart_data(res), "robust": robustness_data(res, examples),
+def _page_body(res: dict, examples: dict | None) -> str:
+    return fill((WEB / "page.html").read_text(encoding="utf-8"), tokens_for(res, examples))
+
+
+def _page_data(res: dict, per_item: dict, examples: dict | None) -> dict:
+    return {"scale": scale_cards(res), "replay": replay_data(res, per_item), "chart": chart_data(res), "robust": robustness_data(res, examples),
             "impact": {"handled": res["original"]["mechanism"]["coverage"]}}
-    link = f'<div class="live-go"><a class="btn primary" href="#live" data-go="live">{LIVE_BUTTON}</a></div>'
-    tokens = {**tokens_for(res, examples), "live_link": link if live else ""}
-    return _document("page.html", tokens, data, f"<script>{PLOTLY.read_text(encoding='utf-8')}</script>")
 
 
-def build_header() -> str:
+def _plotly() -> str:
+    return f"<script>{PLOTLY.read_text(encoding='utf-8')}</script>"
+
+
+def build_page(res: dict, per_item: dict, examples: dict | None) -> str:
+    """The whole page as one iframe, used when the Live Lab is off."""
+    return _document(_page_body(res, examples), _page_data(res, per_item, examples), _plotly())
+
+
+def build_split_page(res: dict, per_item: dict, examples: dict | None) -> tuple[str, str]:
+    """Hero to Demo, then Results to the footer, so the Live Lab can sit between them. Each iframe gets only the data its sections read."""
+    top, bottom = _page_body(res, examples).split(RESULTS_START)
+    data = _page_data(res, per_item, examples)
+    return (_document(top, {"scale": data["scale"]}),
+            _document(RESULTS_START + bottom, {k: data[k] for k in ("replay", "chart", "robust", "impact")}, _plotly()))
+
+
+def build_header(live: bool = False) -> str:
     url = github_url()
     button = f'<a class="mz-gh" href="{e(url)}" target="_blank" rel="noopener">View GitHub</a>' if url else ""
-    links = "".join(f'<a href="#{target}">{label}</a>' for target, label in NAV)
+    links = "".join(f'<a href="#{target}">{label}</a>' + (f'<a href="#{LIVE_NAV[0]}">{LIVE_NAV[1]}</a>' if live and target == "demo" else "") for target, label in NAV)
     return f'<header class="mz-head"><a class="mz-brand" href="#top" aria-label="MIZAN, back to top"><span class="mark"></span><span>MIZAN</span></a><nav aria-label="Page sections">{links}</nav>{button}</header>'
 
 
