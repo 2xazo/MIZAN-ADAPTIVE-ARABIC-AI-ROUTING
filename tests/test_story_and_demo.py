@@ -338,6 +338,18 @@ def test_final_values_are_in_the_markup_before_any_script_runs(page):
     assert not re.search(r">\s*0%\s*<", text)
 
 
+def test_fonts_are_self_hosted_with_their_licenses(page):
+    css = (P.WEB / "components.css").read_text(encoding="utf-8")
+    files = re.findall(r"url\('app/static/fonts/([\w-]+\.woff2)'\)", css)
+    assert len(files) == 10
+    folder = ROOT / "app" / "static" / "fonts"
+    for name in files:
+        assert (folder / name).read_bytes()[:4] == b"wOF2", name
+    for family in ("inter", "unbounded", "noto-sans-arabic"):
+        assert "Open Font License" in (folder / f"LICENSE-{family}.txt").read_text(encoding="utf-8")
+    assert "fonts.googleapis.com" not in page and "fonts.googleapis.com" not in P.shell_css()
+
+
 def test_only_the_slow_circles_loop():
     css = (P.WEB / "page.css").read_text(encoding="utf-8")
     assert sorted(re.findall(r"\.(ring-[ab]) \{ animation: spin \d+s linear infinite", css)) == ["ring-a", "ring-b"]

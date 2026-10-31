@@ -5,6 +5,9 @@ backgroundColor = "#0B2E30"
 secondaryBackgroundColor = "#12474B"
 textColor = "#FFFFFF"
 
+[server]
+enableStaticServing = true
+
 [browser]
 gatherUsageStats = false
 

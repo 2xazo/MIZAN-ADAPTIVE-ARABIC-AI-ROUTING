@@ -26,7 +26,6 @@ APP_CONFIG = ROOT / "config" / "app.yaml"
 LETTERS = "ABCDE"
 MAX_QUESTION_CHARS = 2000
 MAX_OPTION_CHARS = 500
-FONTS = "https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600&display=swap"
 TOKEN = re.compile(r"\{\{(\w+)\}\}")
 NAV = (("overview", "Overview"), ("problem", "Problem"), ("demo", "Demo"), ("results", "Results"), ("robustness", "Robustness"),
        ("impact", "Impact"), ("replay", "Replay"), ("technical", "Technical details"))
@@ -491,7 +490,7 @@ def _document(body_file: str, tokens: dict, data: dict, libraries: str = "") -> 
     js = (WEB / "page.js").read_text(encoding="utf-8")
     body = fill((WEB / body_file).read_text(encoding="utf-8"), tokens)
     return ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-            f'<link href="{FONTS}" rel="stylesheet"><style>{css}</style></head><body><div id="page">{body}</div>'
+            f'<style>{css}</style></head><body><div id="page">{body}</div>'
             f'{libraries}<script>window.MIZAN={script_json(data)};</script><script>{js}</script></body></html>')
 
 
@@ -511,5 +510,5 @@ def build_header() -> str:
 def shell_css() -> str:
     # st.html removes inline SVG, so the header mark is the same SVG as a CSS background.
     mark = base64.b64encode(LOGO_MARK.replace('<svg class="mark" ', '<svg xmlns="http://www.w3.org/2000/svg" ').encode()).decode()
-    return (f'<style>@import url("{FONTS}");' + (WEB / "components.css").read_text(encoding="utf-8") + (WEB / "shell.css").read_text(encoding="utf-8")
+    return ('<style>' + (WEB / "components.css").read_text(encoding="utf-8") + (WEB / "shell.css").read_text(encoding="utf-8")
             + f'.mz-brand .mark {{ background: url("data:image/svg+xml;base64,{mark}") center / contain no-repeat; }}</style>')

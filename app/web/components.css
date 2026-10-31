@@ -1,8 +1,19 @@
-/* Tokens and the result card. Loaded in the page iframes and in the Streamlit document. */
+/* Tokens and the result card. Loaded in the page iframe and in the Streamlit document. */
+/* Self-hosted, SIL Open Font License. The licenses are beside the files in app/static/fonts. */
+@font-face { font-family: 'Inter'; font-weight: 400; font-style: normal; font-display: swap; src: url('app/static/fonts/inter-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 500; font-style: normal; font-display: swap; src: url('app/static/fonts/inter-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 600; font-style: normal; font-display: swap; src: url('app/static/fonts/inter-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 700; font-style: normal; font-display: swap; src: url('app/static/fonts/inter-latin-700-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Unbounded'; font-weight: 400; font-style: normal; font-display: swap; src: url('app/static/fonts/unbounded-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Unbounded'; font-weight: 600; font-style: normal; font-display: swap; src: url('app/static/fonts/unbounded-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Unbounded'; font-weight: 700; font-style: normal; font-display: swap; src: url('app/static/fonts/unbounded-latin-700-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Noto Sans Arabic'; font-weight: 400; font-style: normal; font-display: swap; src: url('app/static/fonts/noto-sans-arabic-arabic-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Noto Sans Arabic'; font-weight: 500; font-style: normal; font-display: swap; src: url('app/static/fonts/noto-sans-arabic-arabic-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Noto Sans Arabic'; font-weight: 600; font-style: normal; font-display: swap; src: url('app/static/fonts/noto-sans-arabic-arabic-600-normal.woff2') format('woff2'); }
 :root {
   --bg: #0B2E30; --bg-deep: #082427; --bg-soft: #0E383B; --panel: #12474B; --line: #1C5A5F;
   --lime: #C6F23A; --cyan: #2EC4D6; --amber: #F5A524; --text: #FFFFFF; --muted: #A9C4C6;
-  --head: 'Unbounded', 'Inter', sans-serif; --body: 'Inter', 'Noto Sans Arabic', 'Segoe UI', sans-serif;
+  --head: 'Unbounded', 'Inter', 'Segoe UI', sans-serif; --body: 'Inter', 'Noto Sans Arabic', 'Segoe UI', sans-serif;
   --arabic: 'Noto Sans Arabic', 'Segoe UI', sans-serif;
   --mz-head: 68px;
 }
