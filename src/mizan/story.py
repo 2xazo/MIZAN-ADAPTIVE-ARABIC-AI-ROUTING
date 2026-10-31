@@ -36,6 +36,22 @@ def load_json(path=RESULTS) -> dict:
         return json.load(f)
 
 
+TEST_SUMMARY = ARTIFACTS_DIR / "test_summary.txt"
+TEST_FALLBACK = "Automated regression tests covering routing, cost accounting, baselines, and reproducibility."
+
+
+def test_summary(path=None) -> dict | None:
+    """The recorded suite run, or None unless the file says every test passed."""
+    path = path or TEST_SUMMARY
+    if not path.exists():
+        return None
+    rows = dict(line.split(": ", 1) for line in path.read_text(encoding="utf-8").splitlines() if ": " in line)
+    count = rows.get("count", "")
+    if not count.isdigit() or int(count) < 1 or rows.get("result") != f"{count} passed, 0 failed":
+        return None
+    return {"count": int(count), "date": rows.get("date", ""), "commit": rows.get("commit", "")}
+
+
 def relative_error_reduction(res: dict) -> float:
     m = res["original"]["mechanism"]
     return (m["random_acceptance_risk"] - m["selective_risk"]) / m["random_acceptance_risk"]

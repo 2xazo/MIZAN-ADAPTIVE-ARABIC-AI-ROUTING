@@ -292,6 +292,52 @@ def _paired_rows(r: dict) -> list[list]:
              f"{b['cost_diff']['ci95'][0]:+.5f} to {b['cost_diff']['ci95'][1]:+.5f}"] for m, b in r["non_dominance"]["paired"].items()]
 
 
+def directional_exact(d: dict) -> str:
+    return f"{d['observed'] * 100:+.1f} [{d['ci95'][0] * 100:+.1f}, {d['ci95'][1] * 100:+.1f}]".replace("-", "\u2212")
+
+
+def test_line() -> str:
+    t = S.test_summary()
+    return f"{t['count']} automated tests, all passing on {t['date']} at commit {t['commit']}." if t else S.TEST_FALLBACK
+
+
+def tech_summary(res: dict) -> str:
+    """The values a technical reader asks for first, with nothing to open."""
+    o, s, pre = res["original"], res["perturbation"], res["preflight"]
+    mini = o["non_dominance"]["paired"][S.MID]["accuracy_diff"]
+    def card(key, value, note):
+        return f'<div class="tcard"><span class="tk">{key}</span><span class="tv">{value}</span><span class="tn">{note}</span></div>'
+    cards = [card("Margin AUROC", f"{o['mechanism']['auroc']:.3f} \u2192 {s['mechanism']['auroc']:.3f}", "Original run to option-shuffled run. Exact values and descriptive intervals are under Confidence."),
+             card("Frozen threshold", f"{o['threshold']:.2f}", f"Stored as {o['threshold']!r}. Set on development data and never changed."),
+             card("MIZAN vs Random", directional_exact(o["mizan_minus_random"]), "Accuracy points with 95% CI: directional, not conclusive."),
+             card(f"MIZAN vs {S.MID}", f"{mini['observed'] * 100:+.1f} [{mini['ci95'][0] * 100:+.1f}, {mini['ci95'][1] * 100:+.1f}]".replace("-", "\u2212"),
+                  f"Accuracy points with 95% CI. The interval includes zero, and {S.MID} costs less ({usd(o['singles'][S.MID]['total_cost_usd'])} vs {usd(o['mizan']['total_cost_usd'])})."),
+             card("Exact saving", pct(o["mizan"]["saving_vs_top"]), f"95% CI {ci_pct(o['mizan']['saving_ci95'])}. {usd(o['mizan']['total_cost_usd'])} vs {usd(o['singles'][S.LARGE]['total_cost_usd'])} for {S.LARGE}."),
+             card("Commits", f"{e(pre['approved_commit'][:7])} / {e(pre['head'][:7])}", "Preregistration commit, then held-out run commit."),
+             ]
+    return (f'<p class="tech-lead">{e(S.CORE_SENTENCE_TECHNICAL)} {e(S.CONFIDENCE_CHECK)} MIZAN reads confidence from the first answer without calling a separate verifier. '
+            f'It is a {e(S.ROUTING_LAYER)}.</p><div class="tech-cards">{"".join(cards)}</div>'
+            f'<div class="tech-notes"><p>{e(S.SPLIT_SENTENCE)}</p><p>{e(test_line())}</p><p>{e(cost_basis(res))}</p></div>')
+
+
+def demo_table(examples: dict | None) -> str:
+    if not examples:
+        return ""
+    rows = []
+    for title, role in (("High confidence", "high_confidence"), ("Lower confidence", "lower_confidence")):
+        ex = examples["examples"][role]
+        small, large = ex["gpt_4o_mini"], ex["gpt_4_1"]
+        top = small["option_probabilities"][:2]
+        rows.append([title, ex["id"], f"{top[0]['letter']} {prob(top[0]['probability'])}, {top[1]['letter']} {prob(top[1]['probability'])}", small["answer"],
+                     "Correct" if small["answer"] == ex["correct_answer"] else "Incorrect", ex["decision"].capitalize(),
+                     f"{large['answer']} {prob(option_probability(large, large['answer']))}" if large else "Not called", ex["final_answer"], "Correct" if ex["answered_correctly"] else "Incorrect"])
+    return ('<h4>Exact demo values</h4>' + table(["Case", "ID", "gpt-4o-mini top two", "Its answer", "Result", "Route", "gpt-4.1 answer", "Final", "Result"], rows))
+
+
+def _level_rows(r: dict) -> list[list]:
+    return [[name, v["n"], pct(v["accuracy"], 1), ci_pct(v["accuracy_ci95"], 1), pct(v["escalation_rate"], 1)] for name, v in r["levels"].items()]
+
+
 def tech_confidence(res: dict, examples: dict | None) -> str:
     o, s, c = res["original"], res["perturbation"], res["comparison"]
     m, pre = o["mechanism"], res["preflight"]
@@ -315,7 +361,7 @@ def tech_confidence(res: dict, examples: dict | None) -> str:
             f'It escalated {pct(o["mizan"]["achieved_escalation"], 1)} of held-out requests ({o["mizan"]["escalated_items"]} of {o["n"]}) against a {pct(pre["target_rate"], 0)} target on development data.</p>'
             f'<h4>Margin AUROC for {S.SMALL} correctness (descriptive intervals)</h4>{table(["Run", "AUROC", "95% CI"], aucs)}'
             f'<h4>Accepted answers</h4>{table(["Measure", "Value"], accepted_rows)}'
-            f'<h4>MIZAN vs matched random</h4><p>{e(S.directional_copy(res))}: directional, not conclusive. The interval includes zero. The preregistered primary result is "{e(o["primary"])}". On the option-shuffled run: {pts(d1["observed"])} points, 95% CI {ci_pts(d1["ci95"])}.</p>'
+            f'<h4>MIZAN vs matched random</h4><p>{directional_exact(o["mizan_minus_random"])} points: directional, not conclusive. The interval includes zero. The preregistered primary result is "{e(o["primary"])}". On the option-shuffled run: {pts(d1["observed"])} points, 95% CI {ci_pts(d1["ci95"])}.</p>'
             f'<h4>MIZAN vs always {S.MID}</h4><p>MIZAN is {pts(mini["observed"])} points, 95% CI {ci_pts(mini["ci95"])}, on accuracy. That interval includes zero, so MIZAN is not shown to be more accurate than {S.MID}, and {S.MID} costs less.</p>'
             f'<h4>Option-order check</h4>{table(["Metric", "Original", "Options shuffled"], robust)}'
             f'<p>Option order changed {c["routing_decisions_changed"]} of {o["n"]} routing decisions, and MIZAN accuracy moved {pts(c["accuracy_change"])} points. The preregistered claims were that AUROC would not drop by more than 0.05 and that the gain over matched random would keep its sign. {"Both held." if c["claims"]["both_hold"] else "They did not both hold."}</p>'
@@ -336,6 +382,9 @@ def tech_cost(res: dict, examples: dict | None) -> str:
     prices = "; ".join(f"{m} ${v['input']:.2f} input, ${v['output']:.2f} output" for m, v in pre["prices_per_1m"].items())
     return (f'<h4>Original run, {o["n"]} questions</h4>{table(strategy_head, _strategy_rows(o))}{table(paired_head, _paired_rows(o))}'
             f'<h4>Option-shuffled run, same {s["n"]} questions</h4>{table(strategy_head, _strategy_rows(s))}{table(paired_head, _paired_rows(s))}'
+            f'<h4>Accuracy by level, original run</h4>{table(["Level", "Questions", "Accuracy", "95% CI", "Escalated"], _level_rows(o))}'
+            f'<h4>Accuracy by level, option-shuffled run</h4>{table(["Level", "Questions", "Accuracy", "95% CI", "Escalated"], _level_rows(s))}'
+            f'{demo_table(examples)}'
             f'<h4>The two demo requests</h4>{table(["Example", "gpt-4o-mini tokens", "Cost of this request", "Always gpt-4.1", "Calls"], rows)}'
             f'<h4>Prices per 1M tokens</h4><p>{e(prices)}, verified on {e(pre["prices_verified_on"])}.</p>'
             f'<h4>Total spend</h4><p>{usd(ops["ledger_total"])} across all recorded experiments, of which {usd(ops["ledger_delta"])} was the two held-out runs. Budget {usd(ops["budget"], 2)}.</p>')
@@ -358,7 +407,7 @@ def tech_repro(res: dict, examples: dict | None) -> str:
     rules = f'{e(examples["selection_rule"]["high_confidence"])} {e(examples["selection_rule"]["lower_confidence"])}' if examples else ""
     return (f'<h4>Decision</h4><p>{e(res["decision"])} {e(res["decision_reason"])}</p>'
             f'<h4>Split</h4><p>{e(S.SPLIT_SENTENCE)} Development and held-out data share no subject-by-level group, and results describe those 25 equally weighted groups, not ArabicMMLU as a whole.</p>'
-            f'<h4>Commits</h4><p>Preregistration {e(pre["approved_commit"][:7])}. Run {e(pre["head"][:7])}.</p>'
+            f'<h4>Commits</h4><p>Preregistration commit {e(pre["approved_commit"][:7])}. Held-out run commit {e(pre["head"][:7])}.</p><h4>Tests</h4><p>{e(test_line())}</p>'
             f'<h4>Statistics</h4><p>All confidence intervals are two-sided 95% percentile bootstraps with {o["non_dominance"]["paired"][S.SMALL]["iters"]} iterations and seed 42. The AUROC intervals are descriptive.</p>'
             f'<h4>Option-order perturbation</h4><p>{e(man["name"])}: seed {man["seed"]}, {man["n"]} questions, {man["answer_letter_changed"]} answer letters moved, {man["position_dependent_option"]} questions flagged as position-dependent and kept. Same questions and option texts, so this is not a new test set.</p>'
             '<h4>Replay</h4><p>The replay on this page reads the recorded per-item outcomes for all held-out requests. Nothing is called again.</p>'
@@ -477,7 +526,7 @@ def tokens_for(res: dict, examples: dict | None) -> dict:
         "impact_tasks": f"{S.PROJECTION_TASKS:,}", "impact_handled": f"{round(S.PROJECTION_TASKS * m['coverage']):,}",
         "impact_escalated": f"{S.PROJECTION_TASKS - round(S.PROJECTION_TASKS * m['coverage']):,}",
         "scale_title": e(scale_cards(res)[0]["title"]), "scale_text": e(scale_cards(res)[0]["text"]),
-        **robust_markup(examples), "tech_confidence": tech_confidence(res, examples), "tech_cost": tech_cost(res, examples),
+        **robust_markup(examples), "tech_summary": tech_summary(res), "tech_confidence": tech_confidence(res, examples), "tech_cost": tech_cost(res, examples),
         "tech_models": tech_models(res), "tech_repro": tech_repro(res, examples),
         "logo_mark": LOGO_MARK, "logo_png": base64.b64encode(LOGO.read_bytes()).decode(),
         "footer_github": f'<a class="flink" href="{e(url)}" target="_blank" rel="noopener">GitHub</a>' if url else "",

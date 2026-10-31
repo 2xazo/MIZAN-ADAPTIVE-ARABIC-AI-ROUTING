@@ -168,6 +168,13 @@ h1 { font-size: clamp(2rem, 3.7vw, 3.15rem); font-weight: 700; line-height: 1.1;
 .outcome span { color: var(--muted); font: 400 .84rem var(--body); }
 .translation p { margin-bottom: 8px; }
 .translation .letter { font-size: .72rem; }
+.tech-lead { color: var(--text); font-size: 1.05rem; max-width: 110ch; margin: -18px 0 24px; }
+.tech-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.tcard { display: flex; flex-direction: column; gap: 6px; padding: 18px 20px; background: var(--bg); border: 1px solid var(--line); border-radius: 14px; }
+.tk { color: var(--muted); font-size: .82rem; font-weight: 600; }
+.tv { font: 600 1.25rem var(--head); font-variant-numeric: tabular-nums; }
+.tn { color: var(--muted); font-size: .84rem; line-height: 1.4; }
+.tech-notes { display: grid; gap: 6px; margin: 20px 0 24px; color: var(--muted); font-size: .92rem; }
 .tech-body { background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 22px 22px 24px; }
 .tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
 .tabs button { padding: 10px 14px; color: var(--muted); font-weight: 500; font-size: .92rem; border-bottom: 3px solid transparent; margin-bottom: -1px; }
@@ -285,7 +292,7 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
   .wrap { padding: 0 16px; }
   .s { padding: 68px 0; }
   .s-hero { padding: 32px 0 60px; }
-  .demo-panel, .metrics, .errors-grid, .robust-grid, .seg { grid-template-columns: minmax(0, 1fr); }
+  .tech-cards, .demo-panel, .metrics, .errors-grid, .robust-grid, .seg { grid-template-columns: minmax(0, 1fr); }
   .errors-grid, .robust-grid { gap: 28px; }
   #chart { height: 400px; }
   .impact-card { padding: 22px; }

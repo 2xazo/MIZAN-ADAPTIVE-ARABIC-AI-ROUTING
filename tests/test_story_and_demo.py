@@ -350,6 +350,49 @@ def test_fonts_are_self_hosted_with_their_licenses(page):
     assert "fonts.googleapis.com" not in page and "fonts.googleapis.com" not in P.shell_css()
 
 
+def technical_text(document: str) -> str:
+    return re.search(r'<section class="s s-tech".*?</section>', visible(document), re.S).group(0)
+
+
+def test_technical_details_hold_the_exact_values(page):
+    text = technical_text(page)
+    for fragment in (S.CORE_SENTENCE_TECHNICAL, S.SPLIT_SENTENCE, "0.821 \u2192 0.825", "0.8214", "0.8248", ">6.25<", "6.249999994711611", "66.45%",
+                     "+3.1 [\u22120.2, +6.0]", "directional, not conclusive", "a34020c", "47ee70a", "$0.03104", "$0.09254", "$0.01851",
+                     "6398", "7330", "A 100.000%, B &lt;0.01%", "A 49.999%, B 49.999%", "A 98.407%"):
+        assert fragment in text, fragment
+
+
+def test_every_interval_in_the_results_is_in_technical_details(res, page):
+    text = technical_text(page)
+    expected = []
+    for run in (res["original"], res["perturbation"]):
+        expected += [P.ci_pct(v["accuracy_ci95"]) for v in run["singles"].values()]
+        expected += [P.ci_pct(run["mizan"]["accuracy_ci95"]), P.ci_pct(run["mizan"]["saving_ci95"]), P.ci_pct(run["random"]["accuracy_range95"])]
+        expected += [P.ci_pct(v["accuracy_ci95"], 1) for v in run["levels"].values()]
+        expected += [P.ci_pts(run["mizan_minus_random"]["ci95"]) if run is res["perturbation"] else P.directional_exact(run["mizan_minus_random"])]
+        for b in run["non_dominance"]["paired"].values():
+            expected += [P.ci_pts(b["accuracy_diff"]["ci95"]), f"{b['cost_diff']['ci95'][0]:+.5f} to {b['cost_diff']['ci95'][1]:+.5f}"]
+        lo, hi = run["mechanism"]["auroc_ci95_descriptive"]
+        expected.append(f"{lo:.4f} to {hi:.4f}")
+    lo, hi = res["comparison"]["auroc_change_ci95_descriptive"]
+    expected.append(f"{lo:+.4f} to {hi:+.4f}")
+    missing = [x for x in expected if x not in text]
+    assert not missing, missing
+
+
+def test_test_count_comes_from_the_summary_file(tmp_path):
+    t = S.test_summary()
+    assert t and f"{t['count']} automated tests" in P.test_line()
+    bad = tmp_path / "summary.txt"
+    bad.write_text("count: 9\nresult: 8 passed, 1 failed\n", encoding="utf-8")
+    assert S.test_summary(bad) is None
+    assert S.test_summary(tmp_path / "missing.txt") is None
+
+
+def test_no_placeholder_is_visible(page):
+    assert not re.search(r"\[N\]|TODO|TBD|lorem", visible(page), re.I)
+
+
 def test_only_the_slow_circles_loop():
     css = (P.WEB / "page.css").read_text(encoding="utf-8")
     assert sorted(re.findall(r"\.(ring-[ab]) \{ animation: spin \d+s linear infinite", css)) == ["ring-a", "ring-b"]
