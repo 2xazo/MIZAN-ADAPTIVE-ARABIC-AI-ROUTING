@@ -35,7 +35,7 @@
           </g>
         </svg>
         <div class="hero-metric">
-          <span class="hero-num">{{metric_value}}</span>
+          <span class="hero-num" data-count>{{metric_value}}</span>
           <span class="hero-lab">{{metric_label}}</span>
         </div>
       </div>
@@ -106,15 +106,15 @@
         <button class="pt pt-3" type="button" data-p="3" aria-label="Step 3, Confidence is weighed. Show explanation."><i>3</i><span>Confidence is weighed</span></button>
         <button class="pt pt-4 cyan" type="button" data-p="4" aria-label="Step 4, High-capability model only if needed. Show explanation."><i>4</i><span>High-capability model only if needed</span></button>
       </div>
-      <div class="scale-card" id="scale-card" aria-live="polite"><strong></strong><p></p></div>
+      <div class="scale-card" id="scale-card" aria-live="polite"><strong>{{scale_title}}</strong><p>{{scale_text}}</p></div>
       </div>
       <div class="problem-route">
         <svg class="route route-tall" viewBox="0 0 360 620" role="img" aria-label="An Arabic task goes to the economical model and then the confidence gate. High confidence returns the answer. Low confidence or invalid output goes to the high-capability model, which returns the answer.">
-      <path class="rl" d="M180 58 V90"/><path class="fl" d="M180 58 V90"/>
-      <path class="rl" d="M180 148 V180"/><path class="fl" d="M180 148 V180"/>
-      <path class="rl lime" d="M130 238 C90 270 90 300 90 340"/><path class="fl lime" d="M130 238 C90 270 90 300 90 340"/>
-      <path class="rl amber" d="M230 238 C270 270 270 300 270 340"/><path class="fl amber" d="M230 238 C270 270 270 300 270 340"/>
-      <path class="rl cyan" d="M270 398 V500"/><path class="fl cyan" d="M270 398 V500"/>
+      <path class="rl" d="M180 58 V90"/>
+      <path class="rl" d="M180 148 V180"/>
+      <path class="rl lime" d="M130 238 C90 270 90 300 90 340"/>
+      <path class="rl amber" d="M230 238 C270 270 270 300 270 340"/>
+      <path class="rl cyan" d="M270 398 V500"/>
       <text class="bl lime" x="44" y="285" text-anchor="middle"><tspan x="44">Confidence</tspan><tspan x="44" dy="18">high</tspan></text>
       <text class="bl amber" x="300" y="275" text-anchor="middle"><tspan x="300">Low or</tspan><tspan x="300" dy="18">invalid</tspan></text>
       <g class="node"><rect x="80" y="2" width="200" height="56" rx="12"/><text x="180" y="36" text-anchor="middle">Arabic task</text></g>
@@ -151,19 +151,19 @@
     <div class="metrics" data-group="results">
       <div class="mcard lead">
         <button class="x-toggle" type="button" aria-expanded="false" aria-controls="mx-saving">
-          <span class="m-num lime">{{card_saving}}</span><span class="m-lab">lower measured inference cost</span><span class="hint">Details</span>
+          <span class="m-num lime" data-count="results">{{card_saving}}</span><span class="m-lab">lower measured inference cost</span><span class="hint">Details</span>
         </button>
         <div class="x-body" id="mx-saving"><div>{{detail_saving}}</div></div>
       </div>
       <div class="mcard">
         <button class="x-toggle" type="button" aria-expanded="false" aria-controls="mx-points">
-          <span class="m-num">{{card_points}}</span><span class="m-lab">accuracy points vs always-economical</span><span class="hint">Details</span>
+          <span class="m-num" data-count="results">{{card_points}}</span><span class="m-lab">accuracy points vs always-economical</span><span class="hint">Details</span>
         </button>
         <div class="x-body" id="mx-points"><div>{{detail_points}}</div></div>
       </div>
       <div class="mcard">
         <button class="x-toggle" type="button" aria-expanded="false" aria-controls="mx-large">
-          <span class="m-num">Within {{card_large}}</span><span class="m-lab">points of always-large</span><span class="hint">Details</span>
+          <span class="m-num" data-count="results">Within {{card_large}}</span><span class="m-lab">points of always-large</span><span class="hint">Details</span>
         </button>
         <div class="x-body" id="mx-large"><div>{{detail_large}}</div></div>
       </div>
@@ -193,7 +193,7 @@
           <div class="ebar-top"><span>Matched random</span><b>{{error_random}}</b></div>
           <div class="ebar-track"><i class="fill-muted"></i></div>
         </div>
-        <div class="etip" id="etip" role="status"></div>
+        <div class="etip" id="etip" role="status">MIZAN: {{error_mizan}} of the answers it accepted were wrong.</div>
       </div>
     </div>
   </div>
@@ -209,7 +209,7 @@
           <button type="button" id="rb-original" aria-pressed="true">Original</button>
           <button type="button" id="rb-shuffled" aria-pressed="false">Options shuffled</button>
         </div>
-        <div class="optstack" id="optstack" dir="rtl" lang="ar"></div>
+        <div class="optstack" id="optstack" dir="rtl" lang="ar" style="height:{{robust_height}}px">{{robust_rows}}</div>
         <p class="fine">One held-out question, shown in its two recorded option orders.</p>
       </div>
       <div class="robust-right">
@@ -227,16 +227,16 @@
     <h2>Built for Arabic AI at scale</h2>
     <div class="impact-grid">
     <div class="impact-card">
-      <label for="impact-range">Number of similar tasks <output id="impact-n"></output></label>
+      <label for="impact-range">Number of similar tasks <output id="impact-n">{{impact_tasks}}</output></label>
       <input type="range" id="impact-range" min="0" max="300" step="1" value="200">
       <div class="range-ends" aria-hidden="true"><span>10,000</span><span>10,000,000</span></div>
       <div class="impact-nums">
-        <div><span class="i-v lime" id="impact-handled"></span><span class="i-k">handled without a high-capability model call</span></div>
-        <div><span class="i-v amber" id="impact-esc"></span><span class="i-k">escalated</span></div>
+        <div><span class="i-v lime" id="impact-handled">{{impact_handled}}</span><span class="i-k">handled without a high-capability model call</span></div>
+        <div><span class="i-v amber" id="impact-esc">{{impact_escalated}}</span><span class="i-k">escalated</span></div>
       </div>
       <div class="split" id="impact-split" role="img" aria-label="{{impact_handled_share}} handled without a high-capability model call, {{impact_esc_share}} escalated">
-        <i class="fill-lime" data-w="{{impact_handled_w}}" style="width:{{impact_handled_w}}%"><span>{{impact_handled_share}}</span></i>
-        <i class="fill-amber" data-w="{{impact_esc_w}}" style="width:{{impact_esc_w}}%"><span>{{impact_esc_share}}</span></i>
+        <i class="fill-lime" style="width:{{impact_handled_w}}%"><span>{{impact_handled_share}}</span></i>
+        <i class="fill-amber" style="width:{{impact_esc_w}}%"><span>{{impact_esc_share}}</span></i>
       </div>
       <p class="impact-saving"><b>{{impact_saving}}</b> projected measured-cost reduction on this workload</p>
       <p class="fine">Projected from measured held-out routing rates.</p>
@@ -256,14 +256,14 @@
     <h2>Replay the {{replay_n}}-question <span class="nb">held-out</span> evaluation</h2>
     <div class="replay-main">
         <div class="replay-kpis">
-          <div class="kpi lead"><span class="kpi-v lime" id="r-saving"></span><span class="kpi-k">Measured saving vs the always-large baseline</span></div>
-          <div class="kpi"><span class="kpi-v" id="r-accuracy"></span><span class="kpi-k">Accuracy</span></div>
-          <div class="kpi"><span class="kpi-v" id="r-handled"></span><span class="kpi-k">Handled economically</span></div>
+          <div class="kpi lead"><span class="kpi-v lime" id="r-saving">{{card_saving}}</span><span class="kpi-k">Measured saving vs the always-large baseline</span></div>
+          <div class="kpi"><span class="kpi-v" id="r-accuracy">{{replay_accuracy}}</span><span class="kpi-k">Accuracy</span></div>
+          <div class="kpi"><span class="kpi-v" id="r-handled">{{impact_handled_share}}</span><span class="kpi-k">Handled economically</span></div>
         </div>
         <div class="progress" id="r-progress-wrap" role="progressbar" aria-label="Requests replayed" aria-valuemin="0" aria-valuemax="{{replay_n}}"><i id="r-progress"></i></div>
         <div class="replay-foot">
-          <span class="count"><b id="r-count"></b> of {{replay_n}} requests</span>
-          <button class="btn primary small" type="button" id="r-play">Replay</button>
+          <span class="count"><b id="r-count">{{replay_n}}</b> of {{replay_n}} requests</span>
+          <button class="btn primary small" type="button" id="r-play">Restart replay</button>
         </div>
       </div>
   </div>

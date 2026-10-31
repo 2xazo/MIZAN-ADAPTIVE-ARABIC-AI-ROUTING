@@ -425,6 +425,17 @@ def robustness_data(res: dict, examples: dict | None) -> dict:
     return out
 
 
+ROBUST_ROW_PX = 60
+
+
+def robust_markup(examples: dict | None) -> dict:
+    """The option rows in their original order, so they show without the script."""
+    options = examples["examples"]["high_confidence"]["options"] if examples else []
+    rows = "".join(f'<div class="optrow" style="transform:translateY({i * ROBUST_ROW_PX}px)"><bdi class="letter">{LETTERS[i]}</bdi><span>{e(text)}</span></div>'
+                   for i, text in enumerate(options))
+    return {"robust_rows": rows, "robust_height": len(options) * ROBUST_ROW_PX}
+
+
 def script_json(data: dict) -> str:
     return json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
 
@@ -463,7 +474,11 @@ def tokens_for(res: dict, examples: dict | None) -> dict:
         "impact_handled_share": pct(m["coverage"], 1), "impact_esc_share": pct(z["achieved_escalation"], 1),
         "impact_handled_w": f"{m['coverage'] * 100:.1f}", "impact_esc_w": f"{z['achieved_escalation'] * 100:.1f}",
         "impact_saving": f"{z['saving_vs_top'] * 100:.0f}%",
-        "replay_n": str(o["n"]), "tech_confidence": tech_confidence(res, examples), "tech_cost": tech_cost(res, examples),
+        "replay_n": str(o["n"]), "replay_accuracy": pct(z["accuracy"], 1),
+        "impact_tasks": f"{S.PROJECTION_TASKS:,}", "impact_handled": f"{round(S.PROJECTION_TASKS * m['coverage']):,}",
+        "impact_escalated": f"{S.PROJECTION_TASKS - round(S.PROJECTION_TASKS * m['coverage']):,}",
+        "scale_title": e(scale_cards(res)[0]["title"]), "scale_text": e(scale_cards(res)[0]["text"]),
+        **robust_markup(examples), "tech_confidence": tech_confidence(res, examples), "tech_cost": tech_cost(res, examples),
         "tech_models": tech_models(res), "tech_repro": tech_repro(res, examples),
         "logo_mark": LOGO_MARK, "logo_png": base64.b64encode(LOGO.read_bytes()).decode(),
         "footer_github": f'<a class="flink" href="{e(url)}" target="_blank" rel="noopener">GitHub</a>' if url else "",

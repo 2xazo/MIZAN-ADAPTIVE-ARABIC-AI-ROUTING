@@ -75,6 +75,48 @@
     if (arrival && document.getElementById(arrival)) window.addEventListener("load", function () { setTimeout(function () { go(arrival); }, 300); });
   }
 
+  /* Count-up. The final value is already in the markup. It only changes once a frame runs, and it always ends on the original text. */
+  function countUp(el, delay) {
+    if (reduced) return;
+    var finalText = el.textContent;
+    var parts = /^(\D*?)([+-]?)(\d+(?:\.\d+)?)(.*)$/.exec(finalText);
+    if (!parts) return;
+    var to = parseFloat(parts[3]), places = (parts[3].split(".")[1] || "").length, DURATION = 1100;
+    setTimeout(function () {
+      var started = null;
+      var frame = function (now) {
+        if (started === null) started = now;
+        var t = Math.min(1, (now - started) / DURATION);
+        if (t >= 1) { el.textContent = finalText; return; }
+        var eased = 1 - Math.pow(1 - t, 3);
+        el.textContent = parts[1] + parts[2] + (to * eased).toFixed(places) + parts[4];
+        requestAnimationFrame(frame);
+      };
+      requestAnimationFrame(frame);
+      setTimeout(function () { el.textContent = finalText; }, DURATION + 900);
+    }, delay || 0);
+  }
+  function onceInView(el, threshold, run) {
+    if (!el || !window.IntersectionObserver) return;
+    var watcher = new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting) { watcher.disconnect(); run(); }
+    }, { threshold: threshold });
+    watcher.observe(el);
+  }
+  $$('[data-count=""]').forEach(function (el) { countUp(el); });
+  onceInView($(".metrics"), 0.3, function () {
+    $$('[data-count="results"]').forEach(function (el, i) { countUp(el, i * 180); });
+  });
+
+  /* Demo: the meter fills, then the routing decision appears. Without this the panel simply shows its final state. */
+  function playDemo(panel) {
+    if (reduced || !panel) return;
+    panel.classList.remove("play");
+    panel.classList.add("armed");
+    void panel.offsetWidth;
+    setTimeout(function () { panel.classList.remove("armed"); panel.classList.add("play"); }, 40);
+  }
+
   /* Metric cards and chips: click to expand in place, click again to collapse. */
   $$(".x-toggle").forEach(function (btn) {
     btn.addEventListener("click", function () {
@@ -102,6 +144,8 @@
         document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
       });
       if (focus) tab.focus();
+      var panel = document.getElementById(tab.getAttribute("aria-controls"));
+      if (panel.classList.contains("demo-panel")) playDemo(panel);
     }
     tabs.forEach(function (tab, i) {
       tab.addEventListener("click", function () { select(tab); });
@@ -112,13 +156,13 @@
     });
   });
 
+  onceInView($("#panel-high"), 0.3, function () { playDemo($("#panel-high")); });
+
   /* Hero scale. */
   var stage = $("#stage");
   if (stage && D.scale) {
     var card = $("#scale-card");
-    var beam = $(".beam", stage);
     var points = $$(".pt", stage);
-    var tiltTimer = null;
     /* The card always shows the last point. Dimming happens only during an interaction, and the scale is otherwise at full colour. */
     var HOLD_AFTER_CLICK_MS = 2000;
     var held = { hover: 0, keyboard: 0, click: 0 };
@@ -133,12 +177,6 @@
       $("strong", card).textContent = D.scale[n - 1].title;
       $("p", card).textContent = D.scale[n - 1].text;
       points.forEach(function (p) { p.classList.toggle("on", p.getAttribute("data-p") === String(n)); });
-    };
-    var tilt = function (deg) {
-      if (reduced) return;
-      clearTimeout(tiltTimer);
-      beam.style.setProperty("--tilt", deg + "deg");
-      tiltTimer = setTimeout(function () { beam.style.setProperty("--tilt", "0deg"); }, 1300);
     };
     points.forEach(function (p) {
       var n = Number(p.getAttribute("data-p"));
@@ -167,8 +205,6 @@
         syncHighlight();
         clearTimeout(clickTimer);
         clickTimer = setTimeout(function () { held.click = 0; syncHighlight(); }, HOLD_AFTER_CLICK_MS);
-        if (n === 2) tilt(-8);
-        if (n === 4) tilt(8);
       });
     });
     activate(1);
@@ -179,7 +215,7 @@
   if (play && D.replay) {
     var R = D.replay;
     var total = R.ids.length;
-    var BATCH = 10, STEP_MS = 200;
+    var BATCH = 10, STEP_MS = 160;  /* 50 steps, about 8 seconds */
     var timer = null;
     var pct = function (x, places) { return (x * 100).toFixed(places) + "%"; };
     var bar = $("#r-progress"), wrap = $("#r-progress-wrap");
@@ -197,29 +233,24 @@
       for (var k = 0; k < upto; k++) { cost += R.cost[k]; always += R.always[k]; ok += R.ok[k]; esc += R.esc[k]; }
       show({ saving: pct(1 - cost / always, 0), accuracy: pct(ok / upto, 1), handled: pct((upto - esc) / upto, 1) }, upto);
     };
-    showFinal();
-    play.addEventListener("click", function () {
+    var run = function () {
       clearInterval(timer);
       if (reduced) { showFinal(); return; }
-      play.disabled = true;
-      play.textContent = "Replaying";
       bar.style.transition = "none";
       bar.style.width = "0%";
       void bar.offsetWidth;
       bar.style.transition = "";
+      $("#r-count").textContent = "0";
       var done = 0;
       timer = setInterval(function () {
         done = Math.min(total, done + BATCH);
-        if (done >= total) {
-          clearInterval(timer);
-          showFinal();
-          play.disabled = false;
-          play.textContent = "Replay";
-          return;
-        }
+        if (done >= total) { clearInterval(timer); showFinal(); return; }
         at(done);
       }, STEP_MS);
-    });
+    };
+    showFinal();
+    play.addEventListener("click", run);
+    onceInView($(".replay-main"), 0.5, run);
   }
 
   /* Cost and accuracy chart: MIZAN large and lime, the other four small and grey. */
@@ -289,19 +320,7 @@
     var Rb = D.robust;
     var ROW = 60;
     var letters = "ABCDE";
-    stack.style.height = (Rb.options.length * ROW) + "px";
-    var rows = Rb.options.map(function (text) {
-      var row = document.createElement("div");
-      row.className = "optrow";
-      var bdi = document.createElement("bdi");
-      bdi.className = "letter";
-      var span = document.createElement("span");
-      span.textContent = text;
-      row.appendChild(bdi);
-      row.appendChild(span);
-      stack.appendChild(row);
-      return row;
-    });
+    var rows = $$(".optrow", stack);
     var place = function (shuffled) {
       rows.forEach(function (row, i) {
         var pos = shuffled ? Rb.shuffled_positions[i] : i;
@@ -328,13 +347,6 @@
       var mag = Math.pow(10, Math.floor(Math.log10(v)) - 1);
       return Math.round(v / mag) * mag;
     };
-    var split = $$("#impact-split i");
-    var grow = function () {
-      if (reduced) return;
-      split.forEach(function (bar) { bar.style.transition = "none"; bar.style.width = "0"; });
-      void split[0].offsetWidth;
-      split.forEach(function (bar) { bar.style.transition = ""; bar.style.width = bar.getAttribute("data-w") + "%"; });
-    };
     var update = function () {
       var tasks = nice(Math.pow(10, 4 + Number(range.value) / 100));
       var handled = Math.round(tasks * D.impact.handled);
@@ -345,11 +357,5 @@
     };
     range.addEventListener("input", update);
     update();
-    if (window.IntersectionObserver) {
-      var seen = new IntersectionObserver(function (entries) {
-        if (entries[0].isIntersecting) { seen.disconnect(); grow(); }
-      }, { threshold: 0.4 });
-      seen.observe($("#impact-split"));
-    }
   }
 })();

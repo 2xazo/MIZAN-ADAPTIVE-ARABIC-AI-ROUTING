@@ -329,6 +329,21 @@ def test_humain_fit_is_exact_and_claims_nothing_running_today(page):
         assert sentence in text
 
 
+def test_final_values_are_in_the_markup_before_any_script_runs(page):
+    text = visible(page)
+    for fragment in ('<span class="hero-num" data-count>66%</span>', 'data-count="results">66%</span>', 'data-count="results">+5.4</span>', 'data-count="results">Within 3.6</span>',
+                     'id="r-saving">66%</span>', 'id="r-accuracy">79.0%</span>', 'id="r-handled">74.6%</span>', '<b id="r-count">500</b>',
+                     '<output id="impact-n">1,000,000</output>', 'id="impact-handled">746,000</span>', 'id="impact-esc">254,000</span>', 'class="optrow"'):
+        assert fragment in text, fragment
+    assert not re.search(r">\s*0%\s*<", text)
+
+
+def test_only_the_slow_circles_loop():
+    css = (P.WEB / "page.css").read_text(encoding="utf-8")
+    assert sorted(re.findall(r"\.(ring-[ab]) \{ animation: spin \d+s linear infinite", css)) == ["ring-a", "ring-b"]
+    assert css.count("infinite") == 2
+
+
 def test_exact_saving_and_model_names_stay_in_technical_sections(page):
     assert "66.45" in visible(page)
     assert "66.45" not in page_without(page, "technical")
