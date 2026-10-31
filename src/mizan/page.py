@@ -97,23 +97,92 @@ def request_saving(r: dict) -> float:
 # ---------------------------------------------------------------- validation of the free-input form
 
 
-def validate_free_input(question: str, options: list[str]) -> tuple[list[str], list[str]]:
-    """Returns (errors, cleaned options). Options A to D are required, and E is optional."""
+def validate_free_input(question: str, options: list[str], known: str = "") -> tuple[list[str], list[str]]:
+    """Returns (errors, cleaned options). At least two options, in letter order with no gaps. `known` is an optional option letter."""
     question, cleaned = (question or "").strip(), [(o or "").strip() for o in options]
     errors = []
     if not question:
         errors.append("Enter a question.")
     elif len(question) > MAX_QUESTION_CHARS:
         errors.append(f"Keep the question under {MAX_QUESTION_CHARS} characters.")
-    missing = [LETTERS[i] for i, o in enumerate(cleaned[:4]) if not o]
-    if missing:
-        errors.append(f"Fill in option{'s' if len(missing) > 1 else ''} {', '.join(missing)}.")
     filled = [o for o in cleaned if o]
+    used = max((i + 1 for i, o in enumerate(cleaned) if o), default=0)
+    missing = [LETTERS[i] for i, o in enumerate(cleaned[:used]) if not o]
+    if len(filled) < 2:
+        errors.append("Enter at least two options.")
+    elif missing:
+        errors.append(f"Fill in option{'s' if len(missing) > 1 else ''} {', '.join(missing)}.")
     if any(len(o) > MAX_OPTION_CHARS for o in filled):
         errors.append(f"Keep each option under {MAX_OPTION_CHARS} characters.")
-    if len(set(filled)) < len(filled):
+    if len({o.casefold() for o in filled}) < len(filled):
         errors.append("Each option must be different.")
+    if known and known not in LETTERS[:used]:
+        errors.append(f"The known correct option {known} is not one of the options entered.")
     return errors, filled
+
+
+# ---------------------------------------------------------------- the live result, shown only in the Demo section's live form
+
+
+LIVE_NO_KEY = "Live mode is unavailable because OPENAI_API_KEY is not configured. The recorded examples remain available."
+LIVE_ACCEPTED, LIVE_ESCALATED = "Accepted — no second model call", "Escalated — high-capability model called"
+
+
+def live_answer(label: str, letter: str | None, options: list[str], tone: str, missing: str = "No valid answer letter was returned.") -> str:
+    if not letter:
+        return f'<div class="answer {tone}"><div class="tag">{e(label)}</div><p class="none">{e(missing)}</p></div>'
+    return (f'<div class="answer {tone}"><div class="tag">{e(label)}</div>'
+            f'<div class="ar" dir="auto"><bdi class="letter">{e(letter)}</bdi> {e(options[LETTERS.index(letter)])}</div></div>')
+
+
+def live_top_two(side: dict) -> str:
+    return ", ".join(f'{p["letter"]} {prob(p["probability"])}' for p in side["option_probabilities"][:2]) or "Not available"
+
+
+def live_margin(r: dict) -> str:
+    return "not available (invalid output)" if not r["small_valid"] else margin_text(r["margin"])
+
+
+def live_technical(r: dict) -> str:
+    """Raw values for this one run. The only place in the live result that names a model."""
+    small, large = r["small"], r["large"]
+    signal = [["Top two options (economical model)", live_top_two(small)], ["Margin", live_margin(r)], ["Threshold (frozen)", repr(r["threshold"])],
+              ["Decision", LIVE_ESCALATED if r["decision"] == D.ESCALATED else LIVE_ACCEPTED]]
+
+    def call_row(sent_as, side):
+        return [sent_as, side["model_returned"], side["input_tokens"], side["output_tokens"], usd(side["cost_usd"], 7), f'{side["latency_s"]:.2f} s']
+    calls = [call_row(D.SMALL, small)] + ([call_row(D.LARGE, large)] if large else [])
+    always_kind = "measured tokens of this run" if r["always_large_cost_kind"] == "measured" else "same tokens at its price"
+    routes = [[f"Always {D.SMALL}", usd(small["cost_usd"], 7)], ["MIZAN, this run", usd(r["cost_usd"], 7)],
+              [f"Always {D.LARGE} ({always_kind})", usd(r["always_large_cost_usd"], 7)]]
+    return (f'<div class="live-tech"><h5>Technical details</h5>{table(["Measure", "Value"], signal)}'
+            f'<h5>Calls</h5>{table(["Sent as", "Model returned", "Input tokens", "Output tokens", "Cost", "Latency"], calls)}'
+            f'<h5>Estimated cost per route</h5>{table(["Route", "Cost"], routes)}'
+            f'<p class="live-fine">Costs use config/prices.yaml, verified on {e(r["prices_verified_on"])}. Latency was measured for this run only and is not an evaluation result. '
+            'This run is not part of the held-out results.</p></div>')
+
+
+def live_result(run: dict) -> str:
+    """One live run, from `D.live_request`, with the question and options as the user typed them."""
+    r, options, known = run["result"], run["options"], run["known"]
+    escalated = r["decision"] == D.ESCALATED
+    final = r["final_answer"]
+    items = "".join(f'<li class="{"picked" if LETTERS[i] == final else ""}"><bdi class="letter">{LETTERS[i]}</bdi><span>{e(o)}</span></li>' for i, o in enumerate(options))
+    answers = live_answer("Economical model answer", r["small_answer"], options, "amber" if escalated else "lime")
+    no_final = "No final answer was returned."
+    if escalated:
+        answers += live_answer("High-capability model answer", r["large_answer"], options, "cyan", r["large_error"] or "No valid answer letter was returned.")
+    answers += live_answer("Final answer", final, options, "cyan" if escalated else "lime", no_final)
+    outcome = ""
+    if known and final:
+        right = final == known
+        outcome = f'<div class="outcome {"ok" if right else "bad"}">{"Correct" if right else "Incorrect"}<span>Compared with the known correct option you entered ({e(known)})</span></div>'
+    elif known:
+        outcome = '<p class="live-fine">No final answer, so nothing was compared with the known correct option.</p>'
+    decision = f'<span class="badge escalated">{LIVE_ESCALATED}</span>' if escalated else f'<span class="badge handled">{LIVE_ACCEPTED}</span>'
+    return (f'<div class="live-result"><div class="live-head"><span class="badge live">LIVE API RUN</span>{decision}</div>'
+            f'<div class="live-grid"><div class="question"><div class="tag">Your question</div><p class="ar q" dir="auto">{e(run["question"])}</p><ol class="opts ar" dir="auto">{items}</ol></div>'
+            f'<div class="decision {"escalated" if escalated else "handled"}"><div class="answers">{answers}</div>{outcome}</div></div>{live_technical(r)}</div>')
 
 
 # ---------------------------------------------------------------- the result card, shared by demo and free input
@@ -530,6 +599,7 @@ def tokens_for(res: dict, examples: dict | None) -> dict:
         "tech_models": tech_models(res), "tech_repro": tech_repro(res, examples),
         "logo_mark": LOGO_MARK, "logo_png": base64.b64encode(LOGO.read_bytes()).decode(),
         "footer_github": f'<a class="flink" href="{e(url)}" target="_blank" rel="noopener">GitHub</a>' if url else "",
+        "live_slot": "",
     }
     return {**tokens, **metric_details(res), **demo_panels(examples)}
 
@@ -543,10 +613,12 @@ def _document(body_file: str, tokens: dict, data: dict, libraries: str = "") -> 
             f'{libraries}<script>window.MIZAN={script_json(data)};</script><script>{js}</script></body></html>')
 
 
-def build_page(res: dict, per_item: dict, examples: dict | None) -> str:
+def build_page(res: dict, per_item: dict, examples: dict | None, live: bool = False) -> str:
+    """`live` reserves the space in the Demo section that the Streamlit live form is pinned over."""
     data = {"scale": scale_cards(res), "replay": replay_data(res, per_item), "chart": chart_data(res), "robust": robustness_data(res, examples),
             "impact": {"handled": res["original"]["mechanism"]["coverage"]}}
-    return _document("page.html", tokens_for(res, examples), data, f"<script>{PLOTLY.read_text(encoding='utf-8')}</script>")
+    tokens = {**tokens_for(res, examples), "live_slot": '<div id="live-slot"></div>' if live else ""}
+    return _document("page.html", tokens, data, f"<script>{PLOTLY.read_text(encoding='utf-8')}</script>")
 
 
 def build_header() -> str:

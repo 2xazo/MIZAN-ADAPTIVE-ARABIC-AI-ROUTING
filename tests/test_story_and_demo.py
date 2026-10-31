@@ -9,7 +9,9 @@ import pytest
 from conftest import fake_response, tok
 
 from mizan import client, demo as D, page as P, story as S
+from mizan.client import ApiError
 from mizan.config import ARTIFACTS_DIR, ROOT, experiment, prices
+from mizan.costs import BudgetError
 from mizan.parsing import parse_response
 
 THRESHOLD = 6.249999994711611
@@ -549,8 +551,13 @@ def test_free_input_validation():
     assert P.validate_free_input("q", ["a", "b", "c", "d", ""]) == ([], ["a", "b", "c", "d"])
     assert P.validate_free_input(" q ", ["a", "b", "c", "d", "e"]) == ([], ["a", "b", "c", "d", "e"])
     errors, _ = P.validate_free_input("", ["", "", "", "", ""])
-    assert errors == ["Enter a question.", "Fill in options A, B, C, D."]
+    assert errors == ["Enter a question.", "Enter at least two options."]
+    assert P.validate_free_input("q", ["a", "b", "", "", ""]) == ([], ["a", "b"])
+    assert P.validate_free_input("q", ["a", "", "", "", ""])[0] == ["Enter at least two options."]
     assert P.validate_free_input("q", ["a", "b", "", "d", ""])[0] == ["Fill in option C."]
+    assert P.validate_free_input("q", ["A", "a", "", "", ""])[0] == ["Each option must be different."]
+    assert P.validate_free_input("q", ["a", "b", "", "", ""], "C")[0] == ["The known correct option C is not one of the options entered."]
+    assert P.validate_free_input("q", ["a", "b", "c", "d", "e"], "E")[0] == []
     assert P.validate_free_input("q", ["a", "a", "c", "d", ""])[0] == ["Each option must be different."]
     assert "under" in P.validate_free_input("q" * (P.MAX_QUESTION_CHARS + 1), ["a", "b", "c", "d", ""])[0][0]
     assert "under" in P.validate_free_input("q", ["a" * (P.MAX_OPTION_CHARS + 1), "b", "c", "d", ""])[0][0]
@@ -654,43 +661,236 @@ def test_app_chart_and_scripts_are_embedded(app):
     assert script_data(frames[0])["scale"] and script_data(frames[0])["replay"]["final"]["saving"] == "66%"
 
 
-def test_app_free_input_validates_and_sends_nothing_without_a_key(lab):
-    app = lab
-    app.button(key="btn_route").click().run()
-    assert not app.exception
-    assert "Enter a question." in page_text(app) and "Fill in options A, B, C, D." in page_text(app)
-    app.text_area(key="try_q").set_value("q")
-    for key, value in zip("abcd", "wxyz"):
-        app.text_input(key=f"try_{key}").set_value(value)
-    app.button(key="btn_route").click().run()
-    assert not app.exception
-    assert "Nothing was sent" in page_text(app)
+# ---------------------------------------------------------------- the live form in the Demo section, with the network replaced
 
 
-@pytest.mark.skipif(not S.EXAMPLES.exists(), reason="demo_examples.json is built locally")
-def test_app_load_example_fills_the_form(lab):
-    app = lab
-    app.button(key="btn_load").click().run()
-    assert not app.exception
-    high = S.load_json(S.EXAMPLES)["examples"]["high_confidence"]
-    assert app.text_area(key="try_q").value == high["question"]
-    assert [app.text_input(key=f"try_{k}").value for k in "abcd"] == high["options"]
-    assert app.text_input(key="try_e").value == ""
+SECRET = "sk-test-SECRET-do-not-show"
+FOUR_OPTIONS = {"a": "w", "b": "x", "c": "y", "d": "z"}
 
 
-def test_app_live_route_only_on_button_press_with_fake_network(monkeypatch, isolated_ledger):
+def form_text(at) -> str:
+    """The Streamlit document without the page iframe, whose recorded panels carry their own verdicts."""
+    return "\n".join(el.proto.body for el in at.get("html"))
+
+
+def lab_form(at, question="q", options=None, known=None):
+    at.text_area(key="try_q").set_value(question)
+    for key, value in (FOUR_OPTIONS if options is None else options).items():
+        at.text_input(key=f"try_{key}").set_value(value)
+    if known:
+        at.selectbox(key="try_known").set_value(known)
+
+
+@pytest.fixture
+def live(monkeypatch, isolated_ledger):
+    """The opened live form with a configured key and a replaced network. A test can change the fake's responses."""
     from streamlit.testing.v1 import AppTest
     monkeypatch.delenv("MIZAN_DISABLE_LIVE", raising=False)
-    monkeypatch.setenv("OPENAI_API_KEY", "test-key-not-real")
+    monkeypatch.setenv("OPENAI_API_KEY", SECRET)
     monkeypatch.setenv("MIZAN_LIVE_LAB", "1")
     fake = FakeChat(confident(), unsure())
     monkeypatch.setattr(client, "chat", fake)
     at = AppTest.from_file(str(ROOT / "app" / "streamlit_app.py"), default_timeout=60).run()
     assert not at.exception and fake.calls == []  # opening the page never calls a model
-    at.text_area(key="try_q").set_value("q")
-    for key, value in zip("abcd", "wxyz"):
-        at.text_input(key=f"try_{key}").set_value(value)
-    at.button(key="btn_route").click().run()
-    assert not at.exception and len(fake.calls) == 1
-    text = page_text(at)
-    assert "Handled efficiently" in text and "Live call" in text and "no answer key" in text
+    at.button(key="btn_live").click().run()
+    assert not at.exception and fake.calls == []  # neither does opening the form
+    at.fake = fake
+    return at
+
+
+def failing(error):
+    def chat(*args, **kwargs):
+        raise error
+    return chat
+
+
+def small_then_large_fails(error):
+    def chat(payload, timeout, max_retries):
+        if payload["model"] == "gpt-4o-mini":
+            return unsure(), 0.01
+        raise error
+    return chat
+
+
+def test_live_button_is_in_the_demo_section_only_when_enabled(lab):
+    frame = lab.get("iframe")[0].proto.srcdoc
+    assert frame.index('id="panel-low"') < frame.index('id="live-slot"') < frame.index('id="results"')
+    assert lab.button(key="btn_live").label == "Try your own question — Live"
+    assert not any("Live" in label for _, label in P.NAV)
+    assert not list(lab.text_input)  # the form appears only after the button is pressed
+    lab.button(key="btn_live").click().run()
+    assert lab.button(key="btn_run").label == "Run MIZAN Live" and lab.button(key="btn_load").label == "Load sample question"
+    assert lab.selectbox(key="try_known").value == ""
+
+
+def test_live_slot_is_absent_when_the_lab_is_off(app):
+    assert 'id="live-slot"' not in app.get("iframe")[0].proto.srcdoc
+
+
+@pytest.mark.parametrize("question,options,message", [
+    ("", None, "Enter a question."),
+    ("q", {"a": "", "b": "", "c": "", "d": ""}, "Enter at least two options."),
+    ("q", {"a": "w", "b": "", "c": "y", "d": ""}, "Fill in option B."),
+    ("q", {"a": "w", "b": "w", "c": "", "d": ""}, "Each option must be different."),
+])
+def test_live_incomplete_input_makes_no_call(live, question, options, message):
+    lab_form(live, question, options)
+    live.button(key="btn_run").click().run()
+    assert not live.exception and live.fake.calls == []
+    assert message in page_text(live)
+    assert not live.button(key="btn_run").disabled
+
+
+@pytest.mark.skipif(not S.EXAMPLES.exists(), reason="demo_examples.json is built locally")
+def test_live_load_sample_only_fills_the_form(live):
+    live.button(key="btn_load").click().run()
+    assert not live.exception and live.fake.calls == []
+    high = S.load_json(S.EXAMPLES)["examples"]["high_confidence"]
+    assert live.text_area(key="try_q").value == high["question"]
+    assert [live.text_input(key=f"try_{k}").value for k in "abcd"] == high["options"]
+    assert live.text_input(key="try_e").value == "" and live.selectbox(key="try_known").value == ""
+    assert "LIVE API RUN" not in page_text(live)
+
+
+def test_live_confident_answer_is_accepted_with_no_second_call(live):
+    lab_form(live)
+    live.button(key="btn_run").click().run()
+    assert not live.exception
+    assert [c["model"] for c in live.fake.calls] == ["gpt-4o-mini"]
+    payload = live.fake.calls[0]
+    assert payload["logprobs"] is True and payload["top_logprobs"] == 20 and payload["temperature"] == 0 and payload["max_tokens"] == 3
+    assert "response_format" not in payload and len(payload["messages"]) == 2
+    text = page_text(live)
+    assert "LIVE API RUN" in text and P.LIVE_ACCEPTED in text and P.LIVE_ESCALATED not in text
+    assert repr(THRESHOLD) in text and "gpt-4o-mini" in text and "Latency was measured for this run only" in text
+    assert "Correct<" not in form_text(live) and "Incorrect<" not in form_text(live)  # no known option, so no verdict
+    assert not live.button(key="btn_run").disabled  # usable again after the run
+
+
+def test_live_low_confidence_escalates_and_the_stronger_answer_is_final(live):
+    live.fake.small, live.fake.large = unsure("B"), unsure("A")
+    lab_form(live, known="A")
+    live.button(key="btn_run").click().run()
+    assert not live.exception and [c["model"] for c in live.fake.calls] == ["gpt-4o-mini", "gpt-4.1"]
+    text = page_text(live)
+    assert P.LIVE_ESCALATED in text and "High-capability model answer" in text and "Correct<" in form_text(live) and "Incorrect<" not in form_text(live)
+    run = live.session_state["live"]["result"]
+    assert run["final_answer"] == "A" and run["small_answer"] == "B"
+
+
+def test_live_known_option_never_reaches_the_prompt_and_can_show_incorrect(live):
+    lab_form(live, known="B")
+    live.button(key="btn_run").click().run()
+    item = {"question": "q", "context": "", "options": ["w", "x", "y", "z"]}
+    assert live.fake.calls[0]["messages"] == D.build_messages(item, experiment()["prompt"]["system"])
+    assert "Incorrect<" in form_text(live)
+
+
+def test_live_invalid_output_escalates(live):
+    live.fake.small = fake_response("I think A", letters_entry({"A": 0.9999, "B": 0.00001}), prompt_tokens=100, model="snap")
+    lab_form(live)
+    live.button(key="btn_run").click().run()
+    assert not live.exception and len(live.fake.calls) == 2
+    text = page_text(live)
+    assert P.LIVE_ESCALATED in text and "No valid answer letter was returned." in text and "not available (invalid output)" in text
+
+
+@pytest.mark.parametrize("error", [ApiError(500, "boom"), ApiError(401, f"Incorrect API key provided: {SECRET}"), TimeoutError("slow"), RuntimeError(SECRET), KeyError("choices")])
+def test_live_economical_failure_keeps_the_page_and_shows_no_detail(live, monkeypatch, error):
+    monkeypatch.setattr(client, "chat", failing(error))
+    lab_form(live)
+    live.button(key="btn_run").click().run()
+    assert not live.exception
+    text = page_text(live)
+    assert "The live run failed." in text and "recorded examples remain available" in text and "LIVE API RUN" not in text
+    assert SECRET not in text and "panel-high" in text  # the recorded examples are still on the page
+    assert not live.button(key="btn_run").disabled
+
+
+def test_live_high_capability_failure_shows_no_final_answer(live, monkeypatch):
+    monkeypatch.setattr(client, "chat", small_then_large_fails(ApiError(503, SECRET)))
+    lab_form(live, known="A")
+    live.button(key="btn_run").click().run()
+    assert not live.exception
+    text = page_text(live)
+    assert "LIVE API RUN" in text and P.LIVE_ESCALATED in text and "The API is having problems right now." in text
+    assert "No final answer was returned." in text and SECRET not in text
+    assert "Correct<" not in form_text(live) and "Incorrect<" not in form_text(live)
+    run = live.session_state["live"]["result"]
+    assert run["final_answer"] is None and run["large"] is None and run["always_large_cost_kind"] == "estimated"
+    assert math.isclose(run["cost_usd"], run["small"]["cost_usd"])
+
+
+def test_live_missing_key_blocks_the_run_and_says_why(monkeypatch):
+    from streamlit.testing.v1 import AppTest
+    import dotenv
+    monkeypatch.setattr(dotenv, "load_dotenv", lambda *a, **k: False)  # the real .env must not refill the key
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("MIZAN_DISABLE_LIVE", raising=False)
+    monkeypatch.setenv("MIZAN_LIVE_LAB", "1")
+    monkeypatch.setattr(client, "chat", lambda *a, **k: pytest.fail("the app called the network"))
+    at = AppTest.from_file(str(ROOT / "app" / "streamlit_app.py"), default_timeout=60).run()
+    at.button(key="btn_live").click().run()
+    assert not at.exception
+    assert "Live mode is unavailable because OPENAI_API_KEY is not configured. The recorded examples remain available." in page_text(at)
+    assert at.button(key="btn_run").disabled
+    assert "panel-high" in page_text(at)
+
+
+def test_live_no_key_in_responses_or_logs(live, monkeypatch, caplog, capfd):
+    live.fake.small, live.fake.large = unsure("B"), unsure("A")
+    lab_form(live, known="A")
+    live.button(key="btn_run").click().run()
+    with_result = page_text(live)
+    monkeypatch.setattr(client, "chat", failing(ApiError(401, f"Incorrect API key provided: {SECRET}")))
+    live.button(key="btn_run").click().run()
+    out = capfd.readouterr()
+    assert "The live run failed." in page_text(live)
+    assert SECRET not in with_result and SECRET not in page_text(live)
+    assert SECRET not in caplog.text and SECRET not in out.out and SECRET not in out.err
+
+
+def test_live_tokens_and_cost_use_the_prices_file(live):
+    live.fake.small, live.fake.large = unsure("B"), unsure("A")
+    lab_form(live)
+    live.button(key="btn_run").click().run()
+    run = live.session_state["live"]["result"]
+    small_cost = 100 / 1e6 * 0.15 + 1 / 1e6 * 0.60
+    large_cost = 100 / 1e6 * 2.0 + 1 / 1e6 * 8.0
+    assert math.isclose(run["small"]["cost_usd"], small_cost) and math.isclose(run["large"]["cost_usd"], large_cost)
+    assert math.isclose(run["cost_usd"], small_cost + large_cost)
+    text = page_text(live)
+    assert P.usd(small_cost, 7) in text and P.usd(small_cost + large_cost, 7) in text and P.usd(large_cost, 7) in text
+    assert "<td>100</td>" in text and "<td>1</td>" in text
+
+
+def test_live_supports_option_e(live):
+    live.fake.small = fake_response("E", letters_entry({"E": 0.9999, "B": 0.00001}, "E"), prompt_tokens=100, model="snap")
+    lab_form(live, options={"a": "v", "b": "w", "c": "x", "d": "y", "e": "z"}, known="E")
+    live.button(key="btn_run").click().run()
+    assert not live.exception and len(live.fake.calls) == 1
+    prompt = live.fake.calls[0]["messages"][1]["content"]
+    assert "E. z" in prompt and "Available choices: A, B, C, D, E" in prompt
+    run = live.session_state["live"]
+    assert run["result"]["final_answer"] == "E" and run["options"][4] == "z"
+    assert "Correct<" in form_text(live)
+
+
+def test_live_uses_the_frozen_threshold_and_writes_no_question_to_disk(live, isolated_ledger):
+    question = "UNIQUE-QUESTION-TEXT"
+    lab_form(live, question=question)
+    live.button(key="btn_run").click().run()
+    assert live.session_state["live"]["result"]["threshold"] == THRESHOLD
+    assert question not in isolated_ledger.read_text(encoding="utf-8")
+
+
+def test_live_user_text_is_escaped(live):
+    lab_form(live, question="<img src=x onerror=alert(1)>", options={"a": "<script>x</script>", "b": "w", "c": "", "d": ""})
+    live.button(key="btn_run").click().run()
+    text = page_text(live)
+    assert "&lt;img src=x" in text and "<img src=x" not in text and "&lt;script&gt;x" in text
+
+
+def test_failure_messages_never_quote_the_exception():
+    for err in (ApiError(401, SECRET), ApiError(429, SECRET), ApiError(400, SECRET), ApiError(502, SECRET), TimeoutError(SECRET), ValueError(SECRET), BudgetError(SECRET)):
+        assert SECRET not in D.failure_message(err)

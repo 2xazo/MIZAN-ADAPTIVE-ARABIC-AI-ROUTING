@@ -36,7 +36,7 @@
   window.addEventListener("load", screenHeight);
   function locate(id) {
     if (!host) { var own = document.getElementById(id); return own ? { el: own, frame: null } : null; }
-    var direct = id === "try" ? host.querySelector(".st-key-try") : host.getElementById(id);
+    var direct = host.getElementById(id);
     if (direct) return { el: direct, frame: null };
     var frames = $$("iframe", host);
     for (var i = 0; i < frames.length; i++) {
@@ -80,6 +80,25 @@
     /* A link that arrives with a section in the URL. */
     var arrival = window.parent.location.hash.slice(1);
     if (arrival && document.getElementById(arrival)) window.addEventListener("load", function () { setTimeout(function () { go(arrival); }, 300); });
+  }
+
+  /* The live form is a native Streamlit block, so every model call stays in Python. It sits outside this iframe,
+     pinned over the slot reserved in the Demo section, and the slot takes its height so the sections below move with it. */
+  var slot = $("#live-slot");
+  if (slot && host) {
+    var pin = function () {
+      var box = host.querySelector(".st-key-live"), frame = window.frameElement;
+      var anchor = box && box.offsetParent;
+      if (!anchor || !frame) return;
+      var f = frame.getBoundingClientRect(), s = slot.getBoundingClientRect(), a = anchor.getBoundingClientRect(), root = host.documentElement.style;
+      root.setProperty("--live-top", (f.top + s.top - a.top) + "px");
+      root.setProperty("--live-left", (f.left + s.left - a.left) + "px");
+      root.setProperty("--live-width", s.width + "px");
+      var h = box.offsetHeight + "px";
+      if (slot.style.height !== h) slot.style.height = h;
+    };
+    pin();
+    setInterval(pin, 150);
   }
 
   /* Count-up. The final value is already in the markup. It only changes once a frame runs, and it always ends on the original text. */

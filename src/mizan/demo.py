@@ -5,11 +5,12 @@ Live calls go to their own ledger, so the recorded experiment cost does not chan
 """
 from __future__ import annotations
 
+import http.client
 import math
 
 from . import client
 from .config import ARTIFACTS_DIR
-from .costs import Ledger, cost_usd, estimate_input_tokens, price_for
+from .costs import BudgetError, Ledger, cost_usd, estimate_input_tokens, price_for
 from .heldout import LARGE, SMALL
 from .parsing import NOT_AVAILABLE, clean, parse_response
 from .prompts import build_messages, valid_letters
@@ -18,6 +19,8 @@ from .routing import score
 DEMO_LEDGER = ARTIFACTS_DIR / "demo_ledger.jsonl"
 DEMO_TIMEOUT_S, DEMO_RETRIES = 20, 1  # a stage demo should fail fast; the frozen model settings are unaffected
 HANDLED, ESCALATED = "handled", "escalated"
+# Everything one live call can raise, so a failure stays a message on the page.
+LIVE_ERRORS = (BudgetError, OSError, RuntimeError, ValueError, LookupError, TypeError, http.client.HTTPException)
 # A presentation choice for the high-confidence example only. It has no effect on routing, on any
 # evaluation item or on any result. See docs/decisions.md.
 RELIGIOUS_SUBJECTS = ("Islamic Studies",)
@@ -94,6 +97,21 @@ def has_live_key() -> bool:
     return bool(os.environ.get("OPENAI_API_KEY", "").strip()) and not os.environ.get("MIZAN_DISABLE_LIVE")
 
 
+def failure_message(err: Exception) -> str:
+    """Fixed text for the page. The exception's own text is never used, because an API error can quote part of the key."""
+    if isinstance(err, BudgetError):
+        return "The live spending limit stopped this call."
+    if isinstance(err, client.ApiError):
+        if err.status in (401, 403):
+            return "The API did not accept the configured credentials."
+        if err.status == 429:
+            return "The API is limiting requests right now. Try again shortly."
+        return "The API is having problems right now." if err.status >= 500 else f"The API rejected the request (HTTP {err.status})."
+    if isinstance(err, OSError):  # includes timeouts and connection errors
+        return "The model did not answer in time or could not be reached."
+    return "The model returned an unexpected response."
+
+
 def _call(item: dict, model: str, system: str, call_cfg: dict, prices: dict, ledger: Ledger) -> tuple[dict, dict]:
     messages = build_messages(item, system)
     price = price_for(prices, model)
@@ -113,17 +131,20 @@ def live_request(item: dict, cfg: dict, prices: dict, threshold: float) -> dict:
     ledger = Ledger(DEMO_LEDGER, cfg["budget"]["reserve_usd"])
     small, small_meta = _call(item, SMALL, cfg["prompt"]["system"], cfg["call"], prices, ledger)
     escalated = should_escalate(small, threshold)
-    large, large_meta = (None, None)
+    large, large_meta, large_error = None, None, None
     if escalated:
-        large, large_meta = _call(item, LARGE, cfg["prompt"]["system"], cfg["call"], prices, ledger)
-    # gpt-4.1 was not called for a handled request, so its cost is the same tokens at gpt-4.1 prices.
-    always = large_meta["cost_usd"] if escalated else cost_usd(small_meta["input_tokens"], small_meta["output_tokens"], price_for(prices, LARGE))
+        try:
+            large, large_meta = _call(item, LARGE, cfg["prompt"]["system"], cfg["call"], prices, ledger)
+        except LIVE_ERRORS as err:  # the first call is already paid for and shown; there is simply no final answer
+            large_error = failure_message(err)
+    # With no gpt-4.1 response for this request, its cost is the same tokens at gpt-4.1 prices.
+    always = large_meta["cost_usd"] if large_meta else cost_usd(small_meta["input_tokens"], small_meta["output_tokens"], price_for(prices, LARGE))
     return {"source": "live", "decision": ESCALATED if escalated else HANDLED, "reason": reason_line(small, escalated),
-            "threshold": threshold, "margin": small["margin"], "small_answer": small["letter"],
-            "large_answer": large["letter"] if large else None, "large_valid": large["valid"] if large else None,
-            "final_answer": (large["letter"] if escalated and large else small["letter"]),
-            "cost_usd": small_meta["cost_usd"] + (large_meta["cost_usd"] if escalated else 0.0), "always_large_cost_usd": always,
-            "always_large_cost_kind": "measured" if escalated else "estimated",
+            "threshold": threshold, "margin": small["margin"], "small_valid": small["valid"], "small_answer": small["letter"],
+            "large_answer": large["letter"] if large else None, "large_valid": large["valid"] if large else None, "large_error": large_error,
+            "final_answer": (large["letter"] if large else None) if escalated else small["letter"],
+            "cost_usd": small_meta["cost_usd"] + (large_meta["cost_usd"] if large_meta else 0.0), "always_large_cost_usd": always,
+            "always_large_cost_kind": "measured" if large_meta else "estimated", "prices_verified_on": prices.get("verified_on"),
             "small": small_meta, "large": large_meta,
             "corrected": stronger_corrected(small["letter"], large["letter"] if large else None, item.get("answer"))}
 
