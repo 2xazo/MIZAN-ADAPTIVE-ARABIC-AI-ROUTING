@@ -30,14 +30,14 @@ TOKEN = re.compile(r"\{\{(\w+)\}\}")
 NAV = (("overview", "Overview"), ("problem", "Problem"), ("demo", "Demo"), ("results", "Results"), ("robustness", "Robustness"),
        ("impact", "Impact"), ("replay", "Replay"), ("technical", "Technical details"))
 LOGO_MARK = ('<svg class="mark" viewBox="0 0 120 120" role="img" aria-label="MIZAN logo">'
-             '<path d="M60 8 L68 16 L60 24 L52 16 Z" fill="#C6F23A"/>'
+             '<path d="M60 8 L68 16 L60 24 L52 16 Z" fill="#D0F94A"/>'
              '<line x1="60" y1="26" x2="60" y2="100" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>'
              '<line x1="40" y1="104" x2="80" y2="104" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>'
              '<line x1="18" y1="40" x2="102" y2="40" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>'
              '<line x1="18" y1="40" x2="18" y2="60" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>'
              '<line x1="102" y1="40" x2="102" y2="60" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>'
-             '<path d="M3 60 A15 15 0 0 0 33 60 Z" fill="#C6F23A"/>'
-             '<path d="M87 60 A15 15 0 0 0 117 60 Z" fill="#2EC4D6"/></svg>')
+             '<path d="M3 60 A15 15 0 0 0 33 60 Z" fill="#00D49C"/>'
+             '<path d="M87 60 A15 15 0 0 0 117 60 Z" fill="#00879F"/></svg>')
 
 
 def e(text) -> str:

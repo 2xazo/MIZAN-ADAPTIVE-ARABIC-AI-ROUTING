@@ -271,11 +271,15 @@
     onceInView($(".replay-main"), 0.5, run);
   }
 
-  /* Cost and accuracy chart: MIZAN large and lime, the other four small and grey. */
+  /* Cost and accuracy chart: MIZAN large and lime, the other four small, each in its strategy color. */
   var chart = $("#chart");
   if (chart && D.chart && window.Plotly) {
     var C = D.chart;
-    var GREY = "#A9C4C6", LIME = "#C6F23A";
+    var GREY = "#A9C4C6", LIME = "#D0F94A", TEXT = "rgba(255,255,255,.72)";
+    var pointColor = {};
+    pointColor.mizan = LIME;
+    pointColor[C.small] = "#00D49C";
+    pointColor[C.large] = "#00879F";
     var narrow = function () { return window.innerWidth < 640; };
     var placement = {};
     placement.mizan = { xanchor: "center", yshift: 38 };
@@ -288,7 +292,7 @@
         var hero = p.key === "mizan";
         return {
           x: [p.x], y: [p.y], type: "scatter", mode: "markers", name: p.label,
-          marker: { size: hero ? 24 : 10, color: hero ? LIME : GREY, line: hero ? { color: "#FFFFFF", width: 2 } : { width: 0 } },
+          marker: { size: hero ? 24 : 10, color: pointColor[p.key] || GREY, line: hero ? { color: "#FFFFFF", width: 2 } : { width: 0 } },
           hovertext: [p.tip], hovertemplate: "%{hovertext}<extra></extra>", cliponaxis: false
         };
       });
@@ -298,17 +302,17 @@
       return {
         margin: { l: compact ? 48 : 64, r: compact ? 8 : 24, t: 16, b: compact ? 62 : 58 },
         paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", showlegend: false, hovermode: "closest", dragmode: false,
-        font: { family: "Inter, 'Segoe UI', sans-serif", color: GREY, size: 13 },
-        hoverlabel: { bgcolor: "#0B2E30", bordercolor: LIME, font: { family: "Inter, 'Segoe UI', sans-serif", color: "#FFFFFF", size: 13 }, align: "left" },
-        xaxis: { title: { text: "Measured cost (always-large = 100)", standoff: 12 }, range: [0, 110], tickvals: [0, 20, 40, 60, 80, 100], showgrid: false, zeroline: false, linecolor: "#1C5A5F", fixedrange: true },
-        yaxis: { title: { text: "Accuracy", standoff: 8 }, range: [0.71, 0.86], tickformat: ".0%", dtick: 0.05, gridcolor: "rgba(28,90,95,.45)", zeroline: false, fixedrange: true },
+        font: { family: "Inter, 'Segoe UI', sans-serif", color: TEXT, size: 13 },
+        hoverlabel: { bgcolor: "#C5ECFF", bordercolor: "#006687", font: { family: "Inter, 'Segoe UI', sans-serif", color: "#0B2E30", size: 13 }, align: "left" },
+        xaxis: { title: { text: "Measured cost (always-large = 100)", standoff: 12 }, range: [0, 110], tickvals: [0, 20, 40, 60, 80, 100], showgrid: false, zeroline: false, linecolor: "#006687", fixedrange: true },
+        yaxis: { title: { text: "Accuracy", standoff: 8 }, range: [0.71, 0.86], tickformat: ".0%", dtick: 0.05, gridcolor: "rgba(0,102,135,.45)", zeroline: false, fixedrange: true },
         annotations: C.points.map(function (p) {
           var hero = p.key === "mizan";
           var at = placement[p.key];
-          var second = p.sub ? '<br><span style="font-size:' + (compact ? 10 : 11) + 'px;color:#7E9EA1">' + p.sub + "</span>" : "";
+          var second = p.sub ? '<br><span style="font-size:' + (compact ? 10 : 11) + 'px;color:rgba(255,255,255,.6)">' + p.sub + "</span>" : "";
           return { x: p.x, y: p.y, xanchor: at.xanchor, xshift: at.xshift || 0, yshift: at.yshift, showarrow: false, align: at.xanchor,
                    text: (hero ? "<b>" + p.label + "</b>" : p.label) + second,
-                   font: { size: hero ? 20 : (compact ? 11 : 13), color: hero ? LIME : GREY } };
+                   font: { size: hero ? 20 : (compact ? 11 : 13), color: hero ? LIME : TEXT } };
         })
       };
     };
