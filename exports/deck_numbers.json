@@ -443,8 +443,8 @@
  },
  {
   "name": "Automated tests passing",
-  "display": "141",
-  "value": 141,
+  "display": "156",
+  "value": 156,
   "source_file": "artifacts/test_summary.txt",
   "key": "count"
  }
