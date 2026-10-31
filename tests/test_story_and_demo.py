@@ -428,9 +428,20 @@ def test_demo_cards_use_the_recorded_data(examples):
     assert all(x in escalated for x in ("Escalated to protect quality", "The model was split between two answers.", "First model answer", "Stronger model answer",
                                         "corrected the first answer", "savings come from the requests that avoid escalation"))
     assert "$" not in escalated
-    assert "English translation (machine-assisted)" in P.question_card(high)
+    assert '<details class="translation"><summary>Show English</summary>' in P.question_card(high)  # collapsed by default
     uncorrected = {**D.recorded_request(low), "corrected": False}
     assert "did not correct" in P.result_card(uncorrected, low["options"], low["english"]["options"], low["correct_answer"])
+
+
+@pytest.mark.skipif(not S.EXAMPLES.exists(), reason="demo_examples.json is built locally")
+def test_demo_screens_show_the_stored_values_only(examples):
+    high, low = examples["examples"]["high_confidence"], examples["examples"]["lower_confidence"]
+    assert (high["id"], low["id"]) == ("6398", "7330")
+    accepted = P.demo_decision(high)
+    assert all(x in accepted for x in ("100.000%", "Top two options: A 100.000% &middot; B <0.01%. Answered A.", "gpt-4o-mini", "Accepted", "Correct"))
+    assert "gpt-4.1" not in accepted
+    escalated = P.demo_decision(low)
+    assert all(x in escalated for x in ("49.999%", "Top two options: A 49.999% &middot; B 49.999%. Answered B.", "gpt-4.1 answered <b>A</b> at 98.407%", "Escalated", "Correct"))
 
 
 def test_user_text_is_escaped_in_the_result_card():

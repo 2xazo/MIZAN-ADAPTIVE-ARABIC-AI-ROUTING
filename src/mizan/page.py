@@ -191,7 +191,42 @@ def question_card(ex: dict) -> str:
     context_en = f'<p>{e(en["context"])}</p>' if en.get("context") else ""
     return (f'<div class="question"><div class="tag">{e(ex["label"])} &middot; {e(ex["subject"])}</div>{context}'
             f'<p class="ar q" dir="rtl" lang="ar">{e(ex["question"])}</p><ol class="opts ar" dir="rtl" lang="ar">{opts}</ol>'
-            f'<div class="translation"><div class="tag">English translation (machine-assisted)</div>{context_en}<p>{e(en["question"])}</p><ol class="opts">{opts_en}</ol></div></div>')
+            f'<details class="translation"><summary>Show English</summary><div class="tag">English translation (machine-assisted)</div>{context_en}<p>{e(en["question"])}</p><ol class="opts">{opts_en}</ol></details></div>')
+
+
+def option_probability(side: dict, letter: str) -> float:
+    return next(p["probability"] for p in side["option_probabilities"] if p["letter"] == letter)
+
+
+def top_two(side: dict) -> str:
+    """The two most probable options, in the stored order."""
+    return " &middot; ".join(f'{e(p["letter"])} {prob(p["probability"])}' for p in side["option_probabilities"][:2])
+
+
+def demo_decision(ex: dict) -> str:
+    """The decision half of one demo screen: confidence meter, route taken, final answer, correct or incorrect."""
+    small, large = ex["gpt_4o_mini"], ex["gpt_4_1"]
+    chosen = option_probability(small, small["answer"])
+    escalated = ex["decision"] == D.ESCALATED
+    route = ['<span class="hop lime">gpt-4o-mini</span>']
+    if escalated:
+        route.append('<span class="hop cyan">gpt-4.1</span>')
+    route.append('<span class="hop end">Answer returned</span>')
+    verdict = "Correct" if ex["answered_correctly"] else "Incorrect"
+    first = ""
+    if escalated:
+        first = (f'<div class="first-answer"><span>gpt-4o-mini answered <b>{e(small["answer"])}</b>, which was incorrect.</span>'
+                 f'<span>gpt-4.1 answered <b>{e(large["answer"])}</b> at {prob(option_probability(large, large["answer"]))}.</span></div>') if ex["stronger_model_corrected"] else ""
+    badge = '<span class="badge escalated">Escalated</span>' if escalated else '<span class="badge handled">Accepted</span>'
+    reason = "The top two options were effectively tied, so MIZAN paid for the stronger model." if escalated else "The top answer led its closest rival by a wide gap, so no second call was made."
+    return (f'<div class="decision {"escalated" if escalated else "handled"}">'
+            f'<div class="meter-block"><div class="meter-top"><span>Economical model confidence</span><b>{prob(chosen)}</b></div>'
+            f'<div class="meter"><i style="width:{min(chosen, 1.0) * 100:.3f}%"></i></div>'
+            f'<div class="meter-note">Top two options: {top_two(small)}. Answered {e(small["answer"])}.</div></div>'
+            f'<div class="reveal"><div class="decision-head">{badge}<span class="source">Recorded run</span></div><p class="reason">{reason}</p>'
+            f'<div class="route-taken"><span class="k">Route taken</span><div class="hops">{"".join(route)}</div></div>{first}'
+            f'{answer_block("Final answer", ex["final_answer"], ex["options"], None, "cyan" if escalated else "lime")}'
+            f'<div class="outcome {"ok" if ex["answered_correctly"] else "bad"}">{verdict}<span>Checked against the answer key</span></div></div></div>')
 
 
 def demo_panels(examples: dict | None) -> dict:
@@ -201,7 +236,7 @@ def demo_panels(examples: dict | None) -> dict:
     out = {}
     for token, role in (("demo_high", "high_confidence"), ("demo_low", "lower_confidence")):
         ex = examples["examples"][role]
-        out[token] = question_card(ex) + result_card(D.recorded_request(ex), ex["options"], ex["english"]["options"], ex["correct_answer"])
+        out[token] = question_card(ex) + demo_decision(ex)
     return out
 
 
